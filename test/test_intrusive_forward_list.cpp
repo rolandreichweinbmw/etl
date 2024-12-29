@@ -1261,5 +1261,41 @@ namespace
       CHECK_EQUAL(size_t(std::distance(compare0.begin(), compare0.end())), data0.size());
       CHECK_EQUAL(size_t(std::distance(compare1.begin(), compare1.end())), data1.size());
     }
+
+    //*************************************************************************
+    TEST_FIXTURE(SetupFixture, test_contains)
+    {
+      static ItemNDCNode node0("0");
+      static ItemNDCNode node1("1");
+      static ItemNDCNode node2("2");
+      static ItemNDCNode node3("3");
+      static ItemNDCNode node4("4");
+      static ItemNDCNode node5("5");
+      static ItemNDCNode node6("6");
+      static ItemNDCNode node7("7");
+      static ItemNDCNode node8("8");
+      static ItemNDCNode node9("9");
+
+      DataNDC0 data0;
+
+      data0.push_front(node0);
+      data0.push_front(node1);
+      data0.push_front(node2);
+      data0.push_front(node3);
+      data0.push_front(node4);
+      data0.push_front(node5);
+
+      CHECK_TRUE(data0.contains(node0));
+      CHECK_TRUE(data0.contains(node1));
+      CHECK_TRUE(data0.contains(node2));
+      CHECK_TRUE(data0.contains(node3));
+      CHECK_TRUE(data0.contains(node4));
+      CHECK_TRUE(data0.contains(node5));
+
+      CHECK_FALSE(data0.contains(node6));
+      CHECK_FALSE(data0.contains(node7));
+      CHECK_FALSE(data0.contains(node8));
+      CHECK_FALSE(data0.contains(node9));
+    }
   };
 }
