@@ -406,6 +406,16 @@ namespace etl
                                             : etl::span<element_type, etl::dynamic_extent>(pbegin + offset, pbegin + offset + count);
     }
 
+    //*************************************************************************
+    /// Reinterpret the span as a span with different element type.
+    //*************************************************************************
+    template<typename TNew>
+    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const ETL_NOEXCEPT
+    {
+      return etl::span<TNew, etl::dynamic_extent>(reinterpret_cast<TNew*>(pbegin),
+        Extent * sizeof(element_type) / sizeof(TNew));
+    }
+
   private:
 
     pointer pbegin;
@@ -762,6 +772,25 @@ namespace etl
                                             : etl::span<element_type, etl::dynamic_extent>(pbegin + offset, pbegin + offset + count);
     }
 
+    //*************************************************************************
+    /// Moves the pointer to the first element of the span further by a specified number of elements.
+    ///\tparam elements Number of elements to move forward
+    //*************************************************************************
+    void advance(size_t elements) ETL_NOEXCEPT
+    {
+      pbegin += elements;
+    }
+
+    //*************************************************************************
+    /// Reinterpret the span as a span with different element type.
+    //*************************************************************************
+    template<typename TNew>
+    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const ETL_NOEXCEPT
+    {
+      return etl::span<TNew, etl::dynamic_extent>(reinterpret_cast<TNew*>(pbegin),
+        (pend - pbegin) * sizeof(element_type) / sizeof(TNew));
+    }
+
   private:
 
     pointer pbegin;
@@ -812,6 +841,30 @@ namespace etl
     return (lhs.empty() && rhs.empty()) ||
            ((lhs.begin() == rhs.begin()) && (lhs.size() == rhs.size())) ||
            etl::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+  }
+
+  //*************************************************************************
+  /// Copy complete element data from one span to another. If the destination
+  /// span is bigger than the source span, only the initial part of
+  /// destination span is overwritten.
+  ///\param src Source
+  ///\param dst Destination
+  ///\return true, iff copy was successful. Reasons for unsuccessful operation:
+  /// 1. Source span is empty.
+  /// 2. They both point to the same data.
+  /// 3. The destination span is shorter than the source span.
+  //*************************************************************************
+  template <typename T1, size_t N1, typename T2, size_t N2>
+  typename etl::enable_if<etl::is_same<typename etl::remove_cv<T1>::type, typename etl::remove_cv<T2>::type>::value &&
+                          !etl::is_const<T2>::value, bool>::type
+    copy(const etl::span<T1, N1>& src, const etl::span<T2, N2>& dst)
+  {
+    if (src.empty() || (src.begin() == dst.begin()) || src.size() > dst.size())
+    {
+      return false;
+    }
+    (void) etl::copy(src.begin(), src.end(), dst.begin());
+    return true;
   }
 
   //*************************************************************************
