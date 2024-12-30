@@ -1123,6 +1123,59 @@ namespace
       }
     }
 
+    //*************************************************************************
+    TEST(test_reinterpret_as)
+    {
+      uint8_t data[] = { 0x01, 0x02, 0x03, 0x04, 0x05 };
+      etl::span<uint8_t, 5> data0 = data;
+
+      etl::span<uint16_t> data1 = data0.reinterpret_as<uint16_t>();
+
+      CHECK_EQUAL(data1.size(), 2);
+      CHECK(data1[0] > 0x100);
+      CHECK(data1[1] > 0x300);
+    }
+
+    //*************************************************************************
+    TEST(test_copy)
+    {
+      uint8_t src[] = { 0x01, 0x02, 0x03, 0x04, 0x05 };
+      uint8_t dst[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+      {
+        etl::span<uint8_t, 5> data0 = src;
+        etl::span<uint8_t, 6> data1 = dst;
+
+        CHECK_EQUAL(etl::copy(data0, data1), true);
+        CHECK(std::equal(data0.begin(), data0.end(), data1.begin()));
+      }
+      {
+        etl::span<uint8_t, 5> data0 = src;
+        etl::span<uint8_t, 5> data1(&dst[1], 5);
+
+        CHECK_EQUAL(etl::copy(data0, data1), true);
+        CHECK(std::equal(data0.begin(), data0.end(), data1.begin()));
+      }
+
+      {
+        etl::span<uint8_t, 5> data0 = src;
+        etl::span<uint8_t, 4> data1(&dst[2], 4);
+
+        CHECK_EQUAL(etl::copy(data0, data1), false);
+      }
+      {
+        etl::span<uint8_t, 0> data0(&src[0], 0);
+        etl::span<uint8_t, 6> data1 = dst;
+
+        CHECK_EQUAL(etl::copy(data0, data1), false);
+      }
+      {
+        etl::span<uint8_t, 5> data0 = src;
+        etl::span<uint8_t, 5> data1 = src;
+
+        CHECK_EQUAL(etl::copy(data0, data1), false);
+      }
+    }
+
 #include "etl/private/diagnostic_pop.h"
   };
 }
