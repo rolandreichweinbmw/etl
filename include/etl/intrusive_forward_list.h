@@ -287,9 +287,9 @@ namespace etl
 
     //*************************************************************************
     /// Detects existence of specified node in list.
-    ///\param search_link The Node to find in list
+    ///\param search_link The node to find in list
     //*************************************************************************
-    bool contains(const link_type& search_link) const
+    bool contains_node(const link_type& search_link) const
     {
       const link_type* p_link = start.etl_next;
 
@@ -1221,6 +1221,29 @@ namespace etl
 
         other.initialise();
       }
+    }
+
+    //*************************************************************************
+    /// Detects existence of specified value in list.
+    ///\param value The value to find in list
+    //*************************************************************************
+    bool contains(const_reference value) const
+    {
+      const_iterator i_item = begin();
+
+      while (i_item != end())
+      {
+        if (*i_item == value)
+        {
+          return true;
+        }
+        else
+        {
+          ++i_item;
+        }
+      }
+
+      return false;
     }
 
   private:
