@@ -28,6 +28,170 @@ extern "C" uint64_t getSystemTimeNs();
 
 namespace etl
 {
+namespace internal
+{
+template<intmax_t T>
+struct _static_sign : std::integral_constant<intmax_t, ((T < 0) ? -1 : 1)>
+{};
+
+template<intmax_t T>
+struct _static_abs : std::integral_constant<uintmax_t, T * _static_sign<T>::value>
+{};
+
+template<intmax_t P, intmax_t Q>
+struct _static_gcd : _static_gcd<Q, (P % Q)>
+{};
+
+template<intmax_t P>
+struct _static_gcd<P, 0> : std::integral_constant<intmax_t, _static_abs<P>::value>
+{};
+
+template<intmax_t Q>
+struct _static_gcd<0, Q> : std::integral_constant<intmax_t, _static_abs<Q>::value>
+{};
+
+template<uintmax_t X>
+struct _static_csb : std::integral_constant<uintmax_t, _static_csb<(X >> 1U)>::value + 1U>
+{};
+
+template<>
+struct _static_csb<0> : std::integral_constant<uintmax_t, 0U>
+{};
+
+template<uintmax_t X>
+struct _static_clz
+: std::integral_constant<uintmax_t, _static_csb<UINTMAX_MAX>::value - _static_csb<X>::value>
+{};
+
+template<intmax_t X, intmax_t Y>
+struct _safe_multiply
+{
+private:
+    static constexpr uintmax_t _c
+        = static_cast<uintmax_t>(1) << static_cast<uintmax_t>((sizeof(intmax_t) * 4U));
+
+    static constexpr uintmax_t _a0 = _static_abs<X>::value % _c;
+    static constexpr uintmax_t _a1 = _static_abs<X>::value / _c;
+    static constexpr uintmax_t _b0 = _static_abs<Y>::value % _c;
+    static constexpr uintmax_t _b1 = _static_abs<Y>::value / _c;
+
+public:
+    static constexpr intmax_t value = X * Y;
+};
+
+template<uintmax_t Hi1, uintmax_t Lo1, uintmax_t Hi2, uintmax_t Lo2>
+struct _big_less : std::integral_constant<bool, ((Hi1 < Hi2) || ((Hi1 == Hi2) && (Lo1 < Lo2)))>
+{};
+
+template<uintmax_t Hi1, uintmax_t Lo1, uintmax_t Hi2, uintmax_t Lo2>
+struct _big_add
+{
+    static constexpr uintmax_t _lo = Lo1 + Lo2;
+    static constexpr uintmax_t _carry
+        = ((Lo1 + Lo2) < Lo1) ? static_cast<uintmax_t>(1UL) : static_cast<uintmax_t>(0UL);
+    static constexpr uintmax_t _hi = static_cast<uintmax_t>(Hi1 + Hi2 + _carry);
+};
+
+template<uintmax_t Hi1, uintmax_t Lo1, uintmax_t Hi2, uintmax_t Lo2>
+struct _big_sub
+{
+    static constexpr uintmax_t _lo    = Lo1 - Lo2;
+    static constexpr uintmax_t _carry = static_cast<uintmax_t>(
+        (Lo1 < Lo2) ? static_cast<uintmax_t>(1U) : static_cast<uintmax_t>(0U));
+    static constexpr uintmax_t _hi = static_cast<uintmax_t>((Hi1 - Hi2) - _carry);
+};
+
+template<uintmax_t X, uintmax_t Y>
+struct _big_mul
+{
+private:
+    static constexpr uintmax_t _c
+        = static_cast<uintmax_t>(1) << static_cast<uintmax_t>(sizeof(intmax_t) * 4U);
+    static constexpr uintmax_t _x0     = X % _c;
+    static constexpr uintmax_t _x1     = X / _c;
+    static constexpr uintmax_t _y0     = Y % _c;
+    static constexpr uintmax_t _y1     = Y / _c;
+    static constexpr uintmax_t _x0y0   = static_cast<uintmax_t>(_x0 * _y0);
+    static constexpr uintmax_t _x0y1   = static_cast<uintmax_t>(_x0 * _y1);
+    static constexpr uintmax_t _x1y0   = static_cast<uintmax_t>(_x1 * _y0);
+    static constexpr uintmax_t _x1y1   = static_cast<uintmax_t>(_x1 * _y1);
+    static constexpr uintmax_t _mix    = static_cast<uintmax_t>(_x0y1 + _x1y0);
+    static constexpr uintmax_t _mix_lo = _mix * _c;
+    static constexpr uintmax_t _mix_hi = (_mix / _c) + ((_mix < _x0y1) ? _c : 0U);
+    using res_t                        = _big_add<_mix_hi, _mix_lo, _x1y1, _x0y0>;
+
+public:
+    static constexpr uintmax_t _hi = res_t::_hi;
+    static constexpr uintmax_t _lo = res_t::_lo;
+};
+
+template<uintmax_t N1, uintmax_t N0, uintmax_t D>
+struct _big_div_impl
+{
+private:
+    static constexpr uintmax_t _c
+        = static_cast<uintmax_t>(1U) << static_cast<uintmax_t>(sizeof(intmax_t) * 4U);
+    static constexpr uintmax_t _d1 = D / _c;
+    static constexpr uintmax_t _d0 = D % _c;
+
+    static constexpr uintmax_t _q1x = static_cast<uintmax_t>(N1 / _d1);
+    static constexpr uintmax_t _r1x = static_cast<uintmax_t>(N1 % _d1);
+    static constexpr uintmax_t _m   = static_cast<uintmax_t>(_q1x * _d0);
+    static constexpr uintmax_t _r1y = (_r1x * _c) + (N0 / _c);
+    static constexpr uintmax_t _r1z = _r1y + D;
+    static constexpr uintmax_t _r1  = static_cast<uintmax_t>(
+        ((_r1y < _m) ? ((_r1z >= D) && (_r1z < _m)) ? (_r1z + D) : _r1z : _r1y) - _m);
+    static constexpr uintmax_t _q1 = static_cast<uintmax_t>(
+        _q1x - ((_r1y < _m) ? ((_r1z >= D) && (_r1z < _m)) ? static_cast<uintmax_t>(2U) : 1U : 0U));
+    static constexpr uintmax_t _q0x = static_cast<uintmax_t>(_r1 / _d1);
+    static constexpr uintmax_t _r0x = static_cast<uintmax_t>(_r1 % _d1);
+    static constexpr uintmax_t _n   = static_cast<uintmax_t>(_q0x * _d0);
+    static constexpr uintmax_t _r0y = (_r0x * _c) + (N0 % _c);
+    static constexpr uintmax_t _r0z = _r0y + D;
+    static constexpr uintmax_t _r0  = static_cast<uintmax_t>(
+        ((_r0y < _n) ? ((_r0z >= D) && (_r0z < _n)) ? (_r0z + D) : _r0z : _r0y) - _n);
+    static constexpr uintmax_t _q0 = static_cast<uintmax_t>(
+        _q0x - ((_r0y < _n) ? (((_r0z >= D) && (_r0z < _n)) ? 2U : 1U) : 0U));
+
+public:
+    static constexpr uintmax_t _quot = static_cast<uintmax_t>((_q1 * _c) + _q0);
+    static constexpr uintmax_t _rem  = _r0;
+
+private:
+    using prod_t = _big_mul<_quot, D>;
+    using sum_t  = _big_add<prod_t::_hi, prod_t::_lo, 0, _rem>;
+};
+
+template<uintmax_t N1, uintmax_t N0, uintmax_t D>
+struct _big_div
+{
+private:
+    static constexpr uintmax_t _shift = _static_clz<D>::value;
+    static constexpr uintmax_t _coshift_
+        = static_cast<uintmax_t>((sizeof(uintmax_t) * static_cast<uintmax_t>(8U)) - _shift);
+    static constexpr uintmax_t _coshift = static_cast<uintmax_t>((_shift != 0U) ? _coshift_ : 0U);
+    static constexpr uintmax_t _c1 = static_cast<uintmax_t>(static_cast<uintmax_t>(1U) << _shift);
+    static constexpr uintmax_t _c2 = static_cast<uintmax_t>(static_cast<uintmax_t>(1U) << _coshift);
+    static constexpr uintmax_t _new_d      = static_cast<uintmax_t>(D * _c1);
+    static constexpr uintmax_t _new_n0     = static_cast<uintmax_t>(N0 * _c1);
+    static constexpr uintmax_t _n1_shifted = static_cast<uintmax_t>((N1 % D) * _c1);
+    static constexpr uintmax_t _n0_top = static_cast<uintmax_t>((_shift != 0U) ? (N0 / _c2) : 0U);
+    static constexpr uintmax_t _new_n1 = static_cast<uintmax_t>(_n1_shifted + _n0_top);
+    using res_t                        = _big_div_impl<_new_n1, _new_n0, _new_d>;
+
+public:
+    static constexpr uintmax_t _quot_hi = N1 / D;
+    static constexpr uintmax_t _quot_lo = res_t::_quot;
+    static constexpr uintmax_t _rem     = res_t::_rem / _c1;
+
+private:
+    using p0_t  = _big_mul<_quot_lo, D>;
+    using p1_t  = _big_mul<_quot_hi, D>;
+    using sum_t = _big_add<p0_t::_hi, p0_t::_lo, p1_t::_lo, _rem>;
+};
+
+} // namespace internal
+
 namespace chrono
 {
 /**
