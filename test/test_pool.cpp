@@ -476,4 +476,126 @@ namespace
     CHECK_EQUAL(3, memPool.available());
     CHECK_EQUAL(0, memPool.size());
   }
+
+  //*************************************************************************
+  TEST(test_iterators)
+  {
+    etl::pool<int, 4> pool0;
+
+    etl::ipool::iterator begin = pool0.begin();
+    etl::ipool::iterator end = pool0.end();
+
+    CHECK(begin == end);
+    CHECK(!(begin != end));
+    CHECK_EQUAL(etl::distance(begin, end), 0);
+
+    int* a = pool0.allocate();
+    *a = 1;
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 1);
+
+    int* b = pool0.allocate();
+    *b = 2;
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 2);
+
+    // post increment
+    for (auto i = pool0.begin(); i != pool0.end(); i++)
+    {
+      CHECK(*reinterpret_cast<int*>(*i) == 1 || *reinterpret_cast<int*>(*i) == 2);
+    }
+
+    // pre increment
+    for (auto i = pool0.begin(); i != pool0.end(); ++i)
+    {
+      CHECK(*reinterpret_cast<int*>(*i) == 1 || *reinterpret_cast<int*>(*i) == 2);
+    }
+
+    int* c = pool0.allocate();
+    *c = 3;
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 3);
+
+    pool0.release(b);
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 2);
+
+    int* d = pool0.allocate();
+    *d = 4;
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 3);
+
+    b = pool0.allocate();
+    *b = 2;
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 4);
+
+    // post increment
+    for (auto i = pool0.begin(); i != pool0.end(); i++)
+    {
+      CHECK(*reinterpret_cast<int*>(*i) >= 1 || *reinterpret_cast<int*>(*i) <= 4);
+    }
+
+    // pre increment
+    for (auto i = pool0.begin(); i != pool0.end(); ++i)
+    {
+      CHECK(*reinterpret_cast<int*>(*i) >= 1 || *reinterpret_cast<int*>(*i) <= 4);
+    }
+
+    pool0.release(b);
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 3);
+
+    pool0.release(a);
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 2);
+
+    pool0.release(d);
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin != end);
+    CHECK(!(begin == end));
+    CHECK_EQUAL(etl::distance(begin, end), 1);
+
+    pool0.release(c);
+
+    begin = pool0.begin();
+    end = pool0.end();
+    CHECK(begin == end);
+    CHECK(!(begin != end));
+    CHECK_EQUAL(etl::distance(begin, end), 0);
+  }
 }

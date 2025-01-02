@@ -34,6 +34,7 @@ SOFTWARE.
 #include "platform.h"
 #include "error_handler.h"
 #include "exception.h"
+#include "iterator.h"
 #include "static_assert.h"
 #include "utility.h"
 #include "memory.h"
@@ -103,6 +104,165 @@ namespace etl
   public:
 
     typedef size_t size_type;
+
+    class iterator: public etl::iterator<ETL_OR_STD::forward_iterator_tag, void*>
+    {
+    public:
+
+      friend class ipool;
+
+      //***************************************************************************
+      /// Copy constructor
+      //***************************************************************************
+      iterator(const iterator& other):
+        p_current(other.p_current),
+        p_next(other.p_next),
+        Item_Size(other.Item_Size),
+        p_begin(other.p_begin),
+        p_end(other.p_end)
+      {
+        find_allocated();
+      }
+
+      //***************************************************************************
+      /// Prefix increment operator
+      //***************************************************************************
+      iterator& operator ++()
+      {
+        p_current = p_current + Item_Size;
+        find_allocated();
+        return *this;
+      }
+
+      //***************************************************************************
+      /// Postfix increment operator
+      //***************************************************************************
+      iterator operator ++(int)
+      {
+        iterator temp(*this);
+        p_current = p_current + Item_Size;
+        find_allocated();
+        return temp;
+      }
+
+      //***************************************************************************
+      /// Copy assignment operator
+      //***************************************************************************
+      iterator& operator =(const iterator& other)
+      {
+        p_current = other.p_current;
+        p_next = other.p_next;
+        p_begin = other.p_begin;
+        p_end = other.p_end;
+        return *this;
+      }
+
+      //***************************************************************************
+      /// Dereference operator
+      //***************************************************************************
+      char* operator *() const
+      {
+#include "private/diagnostic_null_dereference_push.h"
+        return p_current;
+#include "private/diagnostic_pop.h"
+      }
+
+      //***************************************************************************
+      /// Equality operator
+      //***************************************************************************
+      friend bool operator == (const iterator& lhs, const iterator& rhs)
+      {
+        return lhs.p_current == rhs.p_current;
+      }
+
+      //***************************************************************************
+      /// Unequality operator
+      //***************************************************************************
+      friend bool operator != (const iterator& lhs, const iterator& rhs)
+      {
+        return !(lhs == rhs);
+      }
+
+    private:
+
+      //***************************************************************************
+      /// optimization: a candidate for being in free list, but no guarantee
+      /// if false, cannot be part of free list, and therefore is allocated
+      /// if true, possibly in free list, but still needs to be checked via free list
+      //***************************************************************************
+      bool is_pointing_into_pool_or_end_or_nullptr(char *address)
+      {
+        return address == ETL_NULLPTR || (p_begin <= address && address <= p_end);
+      }
+
+      //***************************************************************************
+      /// Iterate free list to confirm specified address is included or not
+      //***************************************************************************
+      bool is_in_free_list(char* address)
+      {
+        char* i = p_next;
+        while (i != ETL_NULLPTR) {
+          if (address == i) {
+            return true;
+          }
+          i = *reinterpret_cast<char**>(i);
+        }
+        return false;
+      }
+
+      //***************************************************************************
+      /// find allocated item by increasing p_current, starting at p_current
+      /// leave p_current at p_end if no further allocated item found
+      //***************************************************************************
+      void find_allocated()
+      {
+        while (p_current < p_end) {
+          char* value = *reinterpret_cast<char**>(p_current);
+          if (!is_pointing_into_pool_or_end_or_nullptr(value)) {
+            return;
+          }
+          if (!is_in_free_list(p_current)) {
+            return;
+          }
+          p_current += Item_Size;
+        }
+      }
+
+      //***************************************************************************
+      /// Constructor
+      //***************************************************************************
+      iterator(char* p, char* next_, uint32_t item_size_, char* begin_, char* end_):
+        p_current(p),
+        p_next(next_),
+        Item_Size(item_size_),
+        p_begin(begin_),
+        p_end(end_)
+      {
+        find_allocated();
+      }
+
+      char* p_current;
+      char* p_next;
+      const uint32_t Item_Size;    ///< The size of whole structure.
+      char* p_begin;
+      char* p_end;
+    };
+
+    //***************************************************************************
+    /// begin iterator
+    //***************************************************************************
+    iterator begin()
+    {
+      return iterator(p_buffer, p_next, Item_Size, p_buffer, p_buffer + Item_Size * items_initialised);
+    }
+
+    //***************************************************************************
+    /// end iterator
+    //***************************************************************************
+    iterator end()
+    {
+      return iterator(p_buffer + Item_Size * items_initialised, p_next, Item_Size, p_buffer, p_buffer + Item_Size * items_initialised);
+    }
 
     //*************************************************************************
     /// Allocate storage for an object from the pool.
@@ -363,6 +523,11 @@ namespace etl
           // No more left!
           p_next = ETL_NULLPTR;
         }
+
+        // invalid pointer, outside pool
+        // needs to be different from ETL_NULLPTR since ETL_NULLPTR is used
+        // as list endmarker
+        *reinterpret_cast<uintptr_t*>(p_value) = static_cast<uintptr_t>(1);
       }
       else
       {
@@ -377,39 +542,12 @@ namespace etl
     //*************************************************************************
     void release_item(char* p_value)
     {
-      //// Does it belong to us?
-      //ETL_ASSERT(is_item_in_pool(p_value), ETL_ERROR(pool_object_not_in_pool));
-
-      //if (p_next != ETL_NULLPTR)
-      //{
-      //  // Point it to the current free item.
-      //  *(uintptr_t*)p_value = reinterpret_cast<uintptr_t>(p_next);
-      //}
-      //else
-      //{
-      //  // This is the only free item.
-      //  *((uintptr_t*)p_value) = 0;
-      //}
-
-      //p_next = p_value;
-
-      //--items_allocated;
-
       // Does it belong to us?
       ETL_ASSERT(is_item_in_pool(p_value), ETL_ERROR(pool_object_not_in_pool));
 
       if (items_allocated > 0) 
       {
-        if (p_next != ETL_NULLPTR)
-        {
-          // Point it to the current free item.
-          *(uintptr_t*)p_value = reinterpret_cast<uintptr_t>(p_next);
-        }
-        else
-        {
-          // This is the only free item.
-          *((uintptr_t*)p_value) = 0;
-        }
+        *(uintptr_t*)p_value = reinterpret_cast<uintptr_t>(p_next);
 
         p_next = p_value;
 
