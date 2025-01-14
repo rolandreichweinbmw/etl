@@ -162,9 +162,15 @@ namespace etl
       //***************************************************************************
       char* operator *() const
       {
-#include "private/diagnostic_null_dereference_push.h"
         return p_current;
-#include "private/diagnostic_pop.h"
+      }
+
+      //***************************************************************************
+      /// Member of pointer operator
+      //***************************************************************************
+      char* operator ->() const
+      {
+        return p_current;
       }
 
       //***************************************************************************
