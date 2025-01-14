@@ -30,6 +30,141 @@ namespace etl
 {
 namespace internal
 {
+template<class T, bool Integral, bool Signed, bool Unsigned, class SignedType, class UnsignedType>
+struct _type_traits_base_impl
+{
+    static bool const is_integral = Integral;
+    static bool const is_signed   = Signed;
+    static bool const is_unsigned = Unsigned;
+    using signedType              = SignedType;
+    using unsignedType            = UnsignedType;
+};
+
+template<class T, int Ordinal, class UnsignedType>
+struct _signed_integral_type_traits_impl
+: _type_traits_base_impl<T, true, true, false, T, UnsignedType>
+{
+    static int const ordinal = Ordinal;
+};
+
+template<class T, int Ordinal, class SignedType>
+struct _unsigned_integral_type_traits_impl
+: _type_traits_base_impl<T, true, false, true, SignedType, T>
+{
+    static int const ordinal = Ordinal;
+};
+
+template<class T>
+struct _type_traits_impl : _type_traits_base_impl<T, false, false, false, T, T>
+{};
+
+template<>
+struct _type_traits_impl<bool> : _signed_integral_type_traits_impl<bool, 0, bool>
+{};
+
+template<>
+struct _type_traits_impl<signed char>
+: _signed_integral_type_traits_impl<signed char, 1, unsigned char>
+{};
+
+template<>
+struct _type_traits_impl<unsigned char>
+: _unsigned_integral_type_traits_impl<unsigned char, 1, signed char>
+{};
+
+template<>
+struct _type_traits_impl<signed short>
+: _signed_integral_type_traits_impl<signed short, 2, unsigned short>
+{};
+
+template<>
+struct _type_traits_impl<unsigned short>
+: _unsigned_integral_type_traits_impl<unsigned short, 2, signed short>
+{};
+
+template<>
+struct _type_traits_impl<signed int>
+: _signed_integral_type_traits_impl<signed int, 3, unsigned int>
+{};
+
+template<>
+struct _type_traits_impl<unsigned int>
+: _unsigned_integral_type_traits_impl<unsigned int, 3, signed int>
+{};
+
+template<>
+struct _type_traits_impl<signed long>
+: _signed_integral_type_traits_impl<signed long, 4, unsigned long>
+{};
+
+template<>
+struct _type_traits_impl<unsigned long>
+: _unsigned_integral_type_traits_impl<unsigned long, 4, signed long>
+{};
+
+template<>
+struct _type_traits_impl<signed long long>
+: _signed_integral_type_traits_impl<signed long long, 5, unsigned long long>
+{};
+
+template<>
+struct _type_traits_impl<unsigned long long>
+: _unsigned_integral_type_traits_impl<unsigned long long, 5, signed long long>
+{};
+
+template<class T>
+struct _integral_ordinal : integral_constant<int, internal::_type_traits_impl<T>::ordinal>
+{};
+
+template<
+    class T1,
+    class T2,
+    bool = ((std::is_integral<T1>::value == true) && (std::is_integral<T2>::value == true)),
+    bool = (_integral_ordinal<T1>::value > _integral_ordinal<T2>::value),
+    bool = (_integral_ordinal<T1>::value < _integral_ordinal<T2>::value),
+    bool = (std::is_signed<T1>::value)>
+struct _common_integral_type
+{};
+
+template<class T1, class T2, bool S>
+struct _common_integral_type<T1, T2, true, true, false, S>
+{
+    using type = T1;
+};
+
+template<class T1, class T2, bool S>
+struct _common_integral_type<T1, T2, true, false, true, S>
+{
+    using type = T2;
+};
+
+template<class T1, class T2>
+struct _common_integral_type<T1, T2, true, false, false, false>
+{
+    using type = T1;
+};
+
+template<class T1, class T2>
+struct _common_integral_type<T1, T2, true, false, false, true>
+{
+    using type = T2;
+};
+
+template<
+    class T1,
+    class T2,
+    bool = ((std::is_integral<T1>::value == true) && (std::is_integral<T2>::value == true))>
+struct _common_type_impl
+{};
+
+template<class T>
+struct _common_type_impl<T, T, false> : true_type
+{};
+
+template<class T1, class T2>
+struct _common_type_impl<T1, T2, true> : _common_integral_type<T1, T2>
+{};
+
 template<intmax_t T>
 struct _static_sign : std::integral_constant<intmax_t, ((T < 0) ? -1 : 1)>
 {};
