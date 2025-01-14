@@ -12,6 +12,8 @@
 #ifndef ETL_CHRONO_INCLUDED
 #define ETL_CHRONO_INCLUDED
 
+#include <type_traits>
+
 #include "platform.h"
 
 #include "limits.h"
