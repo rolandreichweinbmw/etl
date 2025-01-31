@@ -71,6 +71,19 @@ namespace etl
     }
   };
 
+  //***************************************************************************
+  /// Typed storage exception.
+  //***************************************************************************
+  class typed_storage_error : public alignment_exception
+  {
+  public:
+
+    typed_storage_error(string_type file_name_, numeric_type line_number_)
+      : alignment_exception(ETL_ERROR_TEXT("typed_storage:error", ETL_ALIGNMENT_FILE_ID"A"), file_name_, line_number_)
+    {
+    }
+  };
+
   //*****************************************************************************
   /// Check that 'p' has 'required_alignment'.
   //*****************************************************************************
@@ -334,6 +347,109 @@ namespace etl
   template <size_t Length, typename T>
   using aligned_storage_as_t = typename aligned_storage_as<Length, T>::type;
 #endif
+
+  //***************************************************************************
+  /// Wrapper class that provides a memory area and lets the user emplace and
+  /// instance of T in this memory at runtime. This class also erases the
+  /// destructor call of T, i.e. if typed_storage goes out of scope, the
+  /// destructor if the wrapped type will not be called. This can be done
+  /// explicitly by calling destroy().
+  /// \tparam T    Type of element stored in this instance of typed_storage.
+  //***************************************************************************
+  template <typename T>
+  class typed_storage
+  {
+  public:
+
+    using value_type      = T;
+    using reference       = T&;
+    using const_reference = T const&;
+    using pointer         = T*;
+    using const_pointer   = T const*;
+
+    // Constructor
+    typed_storage()
+      : valid(false)
+    {
+    }
+
+    //***************************************************************************
+    /// Default destructor which will NOT call the destructor of the object which
+    /// was created by calling emplace().
+    //***************************************************************************
+    ~typed_storage() = default;
+
+    //***************************************************************************
+    /// Calls the destructor of the wrapped object and asserts if has_value() is false.
+    //***************************************************************************
+    void destroy()
+    {
+      ETL_ASSERT(has_value(), ETL_ERROR(etl::typed_storage_error));
+      data.template get_reference<T>().~T();
+      valid = false;
+    }
+
+    //***************************************************************************
+    /// \returns true if object has been constructed using emplace().
+    /// \returns false otherwise.
+    //***************************************************************************
+    bool has_value() const
+    {
+      return valid;
+    }
+
+    //***************************************************************************
+    /// Constructs the instance of T forwarding the given \p args to its constructor and
+    /// asserts if has_value() is true before calling emplace().
+    ///
+    /// \returns the instance of T which has been constructed in the internal byte array.
+    //***************************************************************************
+    template<typename... Args>
+    reference emplace(Args&&... args)
+    {
+      ETL_ASSERT(!has_value(), ETL_ERROR(etl::typed_storage_error));
+      valid = true;
+      return *new (data.template get_address<char>()) value_type(std::forward<Args>(args)...);
+    }
+
+    //***************************************************************************
+    /// \returns a pointer of type T and asserts if has_value() is false.
+    //***************************************************************************
+    pointer operator->()
+    {
+      ETL_ASSERT(has_value(), ETL_ERROR(etl::typed_storage_error));
+      return data.template get_address<value_type>();
+    }
+
+    //***************************************************************************
+    /// \returns a const pointer of type T and asserts if has_value() is false.
+    //***************************************************************************
+    const_pointer operator->() const
+    {
+      return operator->();
+    }
+
+    //***************************************************************************
+    /// \returns reference of type T and asserts if has_value() is false.
+    //***************************************************************************
+    reference operator*()
+    {
+      return *operator->();
+    }
+
+    //***************************************************************************
+    /// \returns const reference of type T and asserts if has_value() is false.
+    //***************************************************************************
+    const_reference operator*() const
+    {
+      return *operator->();
+    }
+
+  private:
+
+    typename aligned_storage_as<sizeof(value_type), value_type>::type data;
+    bool valid;
+  };
 }
 
 #endif
