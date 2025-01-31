@@ -36,6 +36,7 @@ SOFTWARE.
 #include "static_assert.h"
 #include "error_handler.h"
 #include "exception.h"
+#include "utility.h"
 
 #include <stdint.h>
 
@@ -409,7 +410,7 @@ namespace etl
     {
       ETL_ASSERT(!has_value(), ETL_ERROR(etl::typed_storage_error));
       valid = true;
-      return *new (data.template get_address<char>()) value_type(std::forward<Args>(args)...);
+      return *new (data.template get_address<char>()) value_type(etl::forward<Args>(args)...);
     }
 
     //***************************************************************************
