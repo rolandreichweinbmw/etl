@@ -1246,6 +1246,10 @@ namespace
         CHECK_EQUAL(data0[0], 0x05);
         data0.advance(1);
         CHECK_EQUAL(data0.size(), 0);
+        data0.advance(1);
+        CHECK_EQUAL(data0.size(), 0);
+        data0.advance(100);
+        CHECK_EQUAL(data0.size(), 0);
       }
     }
 

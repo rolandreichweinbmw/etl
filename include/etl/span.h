@@ -813,6 +813,7 @@ namespace etl
     //*************************************************************************
     void advance(size_t elements) ETL_NOEXCEPT
     {
+      elements = etl::min(elements, size());
       pbegin += elements;
     }
 
