@@ -1150,7 +1150,7 @@ namespace
       etl::span<uint16_t> data2 = data1.subspan(2).reinterpret_as<uint16_t>();
       CHECK_EQUAL(data2.size(), 5);
 
-      CHECK_THROW(data1.subspan(1).reinterpret_as<uint16_t>(), etl::span_alignment_exception);
+      CHECK_THROW(data2 = data1.subspan(1).reinterpret_as<uint16_t>(), etl::span_alignment_exception);
     }
 
     //*************************************************************************

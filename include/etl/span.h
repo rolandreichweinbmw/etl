@@ -408,7 +408,7 @@ namespace etl
     /// Reinterpret the span as a span with different element type.
     //*************************************************************************
     template<typename TNew>
-    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const
+    ETL_NODISCARD ETL_CONSTEXPR14 etl::span<TNew, etl::dynamic_extent> reinterpret_as() const
     {
 #if ETL_USING_CPP11
       ETL_ASSERT(etl::is_aligned<alignof(TNew)>(pbegin), ETL_ERROR(span_alignment_exception));
@@ -752,7 +752,7 @@ namespace etl
     /// Reinterpret the span as a span with different element type.
     //*************************************************************************
     template<typename TNew>
-    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const
+    ETL_NODISCARD ETL_CONSTEXPR14 etl::span<TNew, etl::dynamic_extent> reinterpret_as() const
     {
 #if ETL_USING_CPP11
       ETL_ASSERT(etl::is_aligned<alignof(TNew)>(pbegin), ETL_ERROR(span_alignment_exception));
