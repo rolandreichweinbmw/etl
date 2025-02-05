@@ -32,6 +32,10 @@ SOFTWARE.
 #define ETL_SPAN_INCLUDED
 
 #include "platform.h"
+
+#include "error_handler.h"
+#include "exception.h"
+#include "alignment.h"
 #include "iterator.h"
 #include "algorithm.h"
 #include "circular_iterator.h"
@@ -55,6 +59,34 @@ SOFTWARE.
 
 namespace etl
 {
+  //***************************************************************************
+  ///\ingroup span
+  /// Exception base for span
+  //***************************************************************************
+  class span_exception : public exception
+  {
+  public:
+
+    span_exception(string_type reason_, string_type file_name_, numeric_type line_number_)
+      : exception(reason_, file_name_, line_number_)
+    {
+    }
+  };
+
+  //***************************************************************************
+  ///\ingroup span
+  /// Bad alignment exception.
+  //***************************************************************************
+  class span_alignment_exception : public span_exception
+  {
+  public:
+
+    span_alignment_exception(string_type file_name_, numeric_type line_number_)
+      : span_exception(ETL_ERROR_TEXT("span:alignment", ETL_SPAN_FILE_ID"A"), file_name_, line_number_)
+    {
+    }
+  };
+
   //***************************************************************************
   /// Span - Fixed Extent
   //***************************************************************************
@@ -376,8 +408,11 @@ namespace etl
     /// Reinterpret the span as a span with different element type.
     //*************************************************************************
     template<typename TNew>
-    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const ETL_NOEXCEPT
+    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const
     {
+#if ETL_USING_CPP11
+      ETL_ASSERT(etl::is_aligned<alignof(TNew)>(pbegin), ETL_ERROR(span_alignment_exception));
+#endif
       return etl::span<TNew, etl::dynamic_extent>(reinterpret_cast<TNew*>(pbegin),
         Extent * sizeof(element_type) / sizeof(TNew));
     }
@@ -717,8 +752,11 @@ namespace etl
     /// Reinterpret the span as a span with different element type.
     //*************************************************************************
     template<typename TNew>
-    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const ETL_NOEXCEPT
+    ETL_NODISCARD ETL_CONSTEXPR etl::span<TNew, etl::dynamic_extent> reinterpret_as() const
     {
+#if ETL_USING_CPP11
+      ETL_ASSERT(etl::is_aligned<alignof(TNew)>(pbegin), ETL_ERROR(span_alignment_exception));
+#endif
       return etl::span<TNew, etl::dynamic_extent>(reinterpret_cast<TNew*>(pbegin),
         (pend - pbegin) * sizeof(element_type) / sizeof(TNew));
     }
@@ -781,17 +819,20 @@ namespace etl
   /// destination span is overwritten.
   ///\param src Source
   ///\param dst Destination
-  ///\return true, iff copy was successful. Reasons for unsuccessful operation:
-  /// 1. Source span is empty.
-  /// 2. They both point to the same data.
-  /// 3. The destination span is shorter than the source span.
+  ///\return true, if copy was successful (including empty source span, or
+  ///        spans pointing to the same address)
+  ///\return false, if the destination span is shorter than the source span.
   //*************************************************************************
   template <typename T1, size_t N1, typename T2, size_t N2>
   typename etl::enable_if<etl::is_same<typename etl::remove_cv<T1>::type, typename etl::remove_cv<T2>::type>::value &&
                           !etl::is_const<T2>::value, bool>::type
     copy(const etl::span<T1, N1>& src, const etl::span<T2, N2>& dst)
   {
-    if (src.empty() || (src.begin() == dst.begin()) || src.size() > dst.size())
+    if (src.empty() || (src.begin() == dst.begin()))
+    {
+      return true;
+    }
+    if (src.size() > dst.size())
     {
       return false;
     }
