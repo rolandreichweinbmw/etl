@@ -1312,6 +1312,25 @@ namespace
       CHECK_EQUAL(etl::copy(data0, data1), true);
     }
 
+    //*************************************************************************
+    TEST(test_make_span_container)
+    {
+      {
+        auto s = etl::make_span(etldata);
+
+        CHECK_EQUAL(s.size(), 10);
+        View view(etldata);
+        CHECK_TRUE(etl::equal(s, view));
+      }
+      {
+        auto s = etl::make_span(cetldata);
+
+        CHECK_EQUAL(s.size(), 10);
+        View view(etldata);
+        CHECK_TRUE(etl::equal(s, view));
+      }
+    }
+
 #include "etl/private/diagnostic_pop.h"
   };
 }
