@@ -188,6 +188,7 @@ add_executable(etl_tests
 	test_message_timer_atomic.cpp
 	test_message_timer_interrupt.cpp
 	test_message_timer_locked.cpp
+	test_middleware.cpp
 	test_multimap.cpp
 	test_multiset.cpp
 	test_multi_array.cpp
