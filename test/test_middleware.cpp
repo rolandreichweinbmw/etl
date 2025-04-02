@@ -8,23 +8,27 @@ namespace
 {
   SUITE(test_middleware)
   {
+    using GetTemperature = Method<int>;
+    using SetTemperature = Method<void, int>;
+    using TemperatureInterface = Interface<GetTemperature, SetTemperature>;
+    
+    class TIS: public Skeleton<TemperatureInterface>
+    {
+    
+    };
+
+    using PIS = Proxy<TemperatureInterface>;
+
     //*************************************************************************
     TEST(test_call)
     {
-        using GetTemperature = Method<int>;
-        using SetTemperature = Method<int>;
-
-        using TemperatureInterface = Interface<GetTemperature, SetTemperature>;
-
-        using TIS = Skeleton<TemperatureInterface>;
-        using PIS = Proxy<TemperatureInterface>;
-
         PIS pis;
+        //TIS tis;
 
-        //pis.call<GetTemperature>(3);
+        pis.call<SetTemperature>(3);
+        future = pis.call<GetTemperature>();
 
         int result{};
-        //pis.call<SetTemperature>(result);
 
         CHECK_EQUAL(result, 3);
     }

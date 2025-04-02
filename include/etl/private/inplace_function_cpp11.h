@@ -193,7 +193,7 @@ namespace etl
 
       ~vtable_t() = default;
 
-      ETL_CONSTEXPR vtable_t() ETL_NOEXCEPT = default;
+      ETL_CONSTEXPR vtable_t() = default;
 
       template <typename T>
       explicit ETL_CONSTEXPR vtable_t(etl::type_identity<T>) ETL_NOEXCEPT
