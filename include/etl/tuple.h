@@ -1275,6 +1275,8 @@ namespace etl
   }
 }
 
+#if ETL_USING_STL
+
 namespace std
 {
   //***************************************************************************
@@ -1295,5 +1297,6 @@ namespace std
   };
 }
 
+#endif
 #endif
 #endif
