@@ -379,5 +379,16 @@ namespace
       result = f3(mft, "Arg1", " : Arg2");
       CHECK_EQUAL("Function3_Const: Arg1 : Arg2", result);
     }
+
+#if ETL_USING_CPP14
+    //*************************************************************************
+    TEST(test_identity)
+    {
+      etl::identity i;
+      std::string s{"abc"};
+      CHECK_EQUAL(s, i(s));
+      CHECK_EQUAL(&s, i(&s));
+    }
+#endif
   }
 }

@@ -3551,6 +3551,138 @@ namespace etl
     nth_element(first, last, compare_t());
   }
 #endif
+
+#if ETL_USING_CPP17
+
+namespace ranges {
+  template<class I, class S, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<!etl::is_range_v<I>>>
+  constexpr bool all_of(I first, S last, Pred pred, Proj proj = {})
+  {
+    auto proj_pred = [&pred, &proj](decltype(*first)& v){ return pred(proj(v));};
+    return etl::all_of(first, last, proj_pred);
+  }
+
+  template<class R, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<etl::is_range_v<R>>>
+  constexpr bool all_of(R&& r, Pred pred, Proj proj = {})
+  {
+    auto proj_pred = [&pred, &proj](decltype(*ETL_OR_STD::cbegin(r))& v){ return pred(proj(v));};
+    return etl::all_of(ETL_OR_STD::cbegin(r), ETL_OR_STD::cend(r), proj_pred);
+  }
+
+  template<class I, class S, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<!etl::is_range_v<I>>>
+  constexpr bool any_of(I first, S last, Pred pred, Proj proj = {})
+  {
+    auto proj_pred = [&pred, &proj](decltype(*first)& v){ return pred(proj(v));};
+    return etl::any_of(first, last, proj_pred);
+  }
+
+  template<class R, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<etl::is_range_v<R>>>
+  constexpr bool any_of(R&& r, Pred pred, Proj proj = {})
+  {
+    auto proj_pred = [&pred, &proj](decltype(*ETL_OR_STD::cbegin(r))& v){ return pred(proj(v));};
+    return etl::any_of(ETL_OR_STD::cbegin(r), ETL_OR_STD::cend(r), proj_pred);
+  }
+
+  template<class I, class S, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<!etl::is_range_v<I>>>
+  constexpr bool none_of(I first, S last, Pred pred, Proj proj = {})
+  {
+    auto proj_pred = [&pred, &proj](decltype(*first)& v){ return pred(proj(v));};
+    return etl::none_of(first, last, proj_pred);
+  }
+
+  template<class R, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<etl::is_range_v<R>>>
+  constexpr bool none_of(R&& r, Pred pred, Proj proj = {})
+  {
+    auto proj_pred = [&pred, &proj](decltype(*ETL_OR_STD::cbegin(r))& v){ return pred(proj(v));};
+    return etl::none_of(ETL_OR_STD::cbegin(r), ETL_OR_STD::cend(r), proj_pred);
+  }
+
+  template<class I, class S, class T, class Proj = etl::identity, typename = etl::enable_if_t<!etl::is_range_v<I>>>
+  constexpr I find(I first, S last, const T& value, Proj proj = {})
+  {
+    if constexpr (etl::is_same_v<Proj, etl::identity>)
+    {
+      return etl::find(first, last, value);
+    }
+    else
+    {
+      using input_type = decltype(*first);
+      return etl::find_if(first, last, [&](const input_type& v){return proj(v) == value;});
+    }
+  }
+
+  template<class R, class T, class Proj = etl::identity, typename = etl::enable_if_t<etl::is_range_v<R>>>
+  constexpr etl::ranges::iterator_t<R> find(R&& r, const T& value, Proj proj = {})
+  {
+    if constexpr (etl::is_same_v<Proj, etl::identity>)
+    {
+      return etl::find(ETL_OR_STD::begin(r), ETL_OR_STD::end(r), value);
+    }
+    else
+    {
+      using input_type = decltype(*ETL_OR_STD::begin(r));
+      return etl::find_if(ETL_OR_STD::begin(r), ETL_OR_STD::end(r), [&](const input_type& v){return proj(v) == value;});
+    }
+  }
+
+  template<class I, class S, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<!etl::is_range_v<I>>>
+  constexpr I find_if(I first, S last, Pred pred, Proj proj = {})
+  {
+    if constexpr (etl::is_same_v<Proj, etl::identity>)
+    {
+      return etl::find_if(first, last, pred);
+    }
+    else
+    {
+      auto proj_pred = [&pred, &proj](decltype(*first)& v){ return pred(proj(v));};
+      return etl::find_if(first, last, proj_pred);
+    }
+  }
+
+  template<class R, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<etl::is_range_v<R>>>
+  constexpr etl::ranges::iterator_t<R> find_if(R&& r, Pred pred, Proj proj = {})
+  {
+    if constexpr (etl::is_same_v<Proj, etl::identity>)
+    {
+      return etl::find_if(ETL_OR_STD::begin(r), ETL_OR_STD::end(r), pred);
+    }
+    else
+    {
+      auto proj_pred = [&pred, &proj](decltype(*ETL_OR_STD::cbegin(r))& v){ return pred(proj(v));};
+      return etl::find_if(ETL_OR_STD::begin(r), ETL_OR_STD::end(r), proj_pred);
+    }
+  }
+
+  template<class I, class S, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<!etl::is_range_v<I>>>
+  constexpr I find_if_not(I first, S last, Pred pred, Proj proj = {})
+  {
+    if constexpr (etl::is_same_v<Proj, etl::identity>)
+    {
+      return etl::find_if_not(first, last, pred);
+    }
+    else
+    {
+      auto proj_pred = [&pred, &proj](decltype(*first)& v){ return pred(proj(v));};
+      return etl::find_if_not(first, last, proj_pred);
+    }
+  }
+
+  template<class R, class Proj = etl::identity, class Pred, typename = etl::enable_if_t<etl::is_range_v<R>>>
+  constexpr etl::ranges::iterator_t<R> find_if_not(R&& r, Pred pred, Proj proj = {})
+  {
+    if constexpr (etl::is_same_v<Proj, etl::identity>)
+    {
+      return etl::find_if_not(ETL_OR_STD::begin(r), ETL_OR_STD::end(r), pred);
+    }
+    else
+    {
+      auto proj_pred = [&pred, &proj](decltype(*ETL_OR_STD::cbegin(r))& v){ return pred(proj(v));};
+      return etl::find_if_not(ETL_OR_STD::begin(r), ETL_OR_STD::end(r), proj_pred);
+    }
+  }
+}
+#endif
+
 }
 
 #include "private/minmax_pop.h"

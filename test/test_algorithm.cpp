@@ -2504,5 +2504,231 @@ namespace
       CHECK_EQUAL(0, result5);
       CHECK_EQUAL(10, result6);
     }
+
+#if ETL_USING_CPP17
+    //*************************************************************************
+    TEST(ranges_all_of)
+    {
+      std::vector<int> vec{1, 2, 3};
+      std::vector<int> vec_big1{11, 22, 33};
+      std::vector<int> vec_big2{1, 22, 3};
+      std::vector<int> vec_empty{};
+      auto is_small = [](const int& v) -> bool { return v < 10; };
+
+      CHECK(etl::ranges::all_of(vec.begin(), vec.end(), is_small));
+      CHECK(etl::ranges::all_of(vec, is_small));
+
+      CHECK(etl::ranges::all_of(vec_empty.begin(), vec_empty.end(), is_small));
+      CHECK(etl::ranges::all_of(vec_empty, is_small));
+
+      CHECK_FALSE(etl::ranges::all_of(vec_big1.begin(), vec_big1.end(), is_small));
+      CHECK_FALSE(etl::ranges::all_of(vec_big1, is_small));
+
+      CHECK_FALSE(etl::ranges::all_of(vec_big2.begin(), vec_big2.end(), is_small));
+      CHECK_FALSE(etl::ranges::all_of(vec_big2, is_small));
+
+      auto proj = [&](const int& v){ return v * 10; };
+
+      CHECK_FALSE(etl::ranges::all_of(vec.begin(), vec.end(), is_small, proj));
+      CHECK_FALSE(etl::ranges::all_of(vec, is_small, proj));
+
+      CHECK(etl::ranges::all_of(vec_empty.begin(), vec_empty.end(), is_small, proj));
+      CHECK(etl::ranges::all_of(vec_empty, is_small, proj));
+
+      CHECK_FALSE(etl::ranges::all_of(vec_big1.begin(), vec_big1.end(), is_small, proj));
+      CHECK_FALSE(etl::ranges::all_of(vec_big1, is_small, proj));
+
+      CHECK_FALSE(etl::ranges::all_of(vec_big2.begin(), vec_big2.end(), is_small, proj));
+      CHECK_FALSE(etl::ranges::all_of(vec_big2, is_small, proj));
+    }
+
+    //*************************************************************************
+    TEST(ranges_any_of)
+    {
+      std::vector<int> vec{1, 2, 3};
+      std::vector<int> vec_big1{11, 22, 33};
+      std::vector<int> vec_big2{0, 22, 3};
+      std::vector<int> vec_empty{};
+      auto is_small = [](const int& v) -> bool { return v < 10; };
+
+      CHECK(etl::ranges::any_of(vec.begin(), vec.end(), is_small));
+      CHECK(etl::ranges::any_of(vec, is_small));
+
+      CHECK_FALSE(etl::ranges::any_of(vec_empty.begin(), vec_empty.end(), is_small));
+      CHECK_FALSE(etl::ranges::any_of(vec_empty, is_small));
+
+      CHECK_FALSE(etl::ranges::any_of(vec_big1.begin(), vec_big1.end(), is_small));
+      CHECK_FALSE(etl::ranges::any_of(vec_big1, is_small));
+
+      CHECK(etl::ranges::any_of(vec_big2.begin(), vec_big2.end(), is_small));
+      CHECK(etl::ranges::any_of(vec_big2, is_small));
+
+      auto proj = [&](const int& v){ return v * 10; };
+
+      CHECK_FALSE(etl::ranges::any_of(vec.begin(), vec.end(), is_small, proj));
+      CHECK_FALSE(etl::ranges::any_of(vec, is_small, proj));
+
+      CHECK_FALSE(etl::ranges::any_of(vec_empty.begin(), vec_empty.end(), is_small, proj));
+      CHECK_FALSE(etl::ranges::any_of(vec_empty, is_small, proj));
+
+      CHECK_FALSE(etl::ranges::any_of(vec_big1.begin(), vec_big1.end(), is_small, proj));
+      CHECK_FALSE(etl::ranges::any_of(vec_big1, is_small, proj));
+
+      CHECK(etl::ranges::any_of(vec_big2.begin(), vec_big2.end(), is_small, proj));
+      CHECK(etl::ranges::any_of(vec_big2, is_small, proj));
+    }
+
+    //*************************************************************************
+    TEST(ranges_none_of)
+    {
+      std::vector<int> vec{1, 2, 3};
+      std::vector<int> vec_big1{11, 22, 33};
+      std::vector<int> vec_big2{0, 22, 3};
+      std::vector<int> vec_empty{};
+      auto is_small = [](const int& v) -> bool { return v < 10; };
+
+      CHECK_FALSE(etl::ranges::none_of(vec.begin(), vec.end(), is_small));
+      CHECK_FALSE(etl::ranges::none_of(vec, is_small));
+
+      CHECK(etl::ranges::none_of(vec_empty.begin(), vec_empty.end(), is_small));
+      CHECK(etl::ranges::none_of(vec_empty, is_small));
+
+      CHECK(etl::ranges::none_of(vec_big1.begin(), vec_big1.end(), is_small));
+      CHECK(etl::ranges::none_of(vec_big1, is_small));
+
+      CHECK_FALSE(etl::ranges::none_of(vec_big2.begin(), vec_big2.end(), is_small));
+      CHECK_FALSE(etl::ranges::none_of(vec_big2, is_small));
+
+      auto proj = [&](const int& v){ return v * 10; };
+
+      CHECK(etl::ranges::none_of(vec.begin(), vec.end(), is_small, proj));
+      CHECK(etl::ranges::none_of(vec, is_small, proj));
+
+      CHECK(etl::ranges::none_of(vec_empty.begin(), vec_empty.end(), is_small, proj));
+      CHECK(etl::ranges::none_of(vec_empty, is_small, proj));
+
+      CHECK(etl::ranges::none_of(vec_big1.begin(), vec_big1.end(), is_small, proj));
+      CHECK(etl::ranges::none_of(vec_big1, is_small, proj));
+
+      CHECK_FALSE(etl::ranges::none_of(vec_big2.begin(), vec_big2.end(), is_small, proj));
+      CHECK_FALSE(etl::ranges::none_of(vec_big2, is_small, proj));
+    }
+
+    //*************************************************************************
+    TEST(ranges_find)
+    {
+      auto proj = [](const int& v) { return v * 2; };
+
+      {
+        std::vector<int> vec{7, 2, 1, 8, 1, 6};
+        auto it = etl::ranges::find(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), 1);
+        CHECK_EQUAL(vec[2], *it);
+        CHECK_EQUAL(&vec[2], &(*it));
+        *it = 3;
+
+        it = etl::ranges::find(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), 1);
+        CHECK_EQUAL(vec[4], *it);
+        CHECK_EQUAL(&vec[4], &(*it));
+
+        it = etl::ranges::find(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), 9);
+
+        CHECK(vec.end() == it);
+
+        it = etl::ranges::find(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), 12, proj);
+        CHECK_EQUAL(vec[5], *it);
+        CHECK_EQUAL(&vec[5], &(*it));
+      }
+
+      {
+        std::vector<int> vec{7, 2, 1, 8, 1, 6};
+        auto it = etl::ranges::find(vec, 1);
+        CHECK_EQUAL(vec[2], *it);
+        CHECK_EQUAL(&vec[2], &(*it));
+
+        it = etl::ranges::find(vec, 16, proj);
+        CHECK_EQUAL(vec[3], *it);
+        CHECK_EQUAL(&vec[3], &(*it));
+      }
+
+    }
+
+    //*************************************************************************
+    TEST(ranges_find_if)
+    {
+      auto proj = [](const int& v) { return v * 2; };
+      auto pred = [](const int& v) { return v == 1; };
+
+      {
+        std::vector<int> vec{7, 2, 1, 8, 1, 6};
+        auto it = etl::ranges::find_if(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), pred);
+        CHECK_EQUAL(vec[2], *it);
+        CHECK_EQUAL(&vec[2], &(*it));
+        *it = 3;
+
+        it = etl::ranges::find_if(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), pred);
+        CHECK_EQUAL(vec[4], *it);
+        CHECK_EQUAL(&vec[4], &(*it));
+
+        it = etl::ranges::find_if(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), [](const int& v) { return v == 9; });
+
+        CHECK(vec.end() == it);
+
+        it = etl::ranges::find_if(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), [](const int& v) { return v == 12; }, proj);
+        CHECK_EQUAL(vec[5], *it);
+        CHECK_EQUAL(&vec[5], &(*it));
+      }
+
+      {
+        std::vector<int> vec{7, 2, 1, 8, 1, 6};
+        auto it = etl::ranges::find_if(vec, pred);
+        CHECK_EQUAL(vec[2], *it);
+        CHECK_EQUAL(&vec[2], &(*it));
+
+        it = etl::ranges::find_if(vec, [](const int& v) { return v == 16; }, proj);
+        CHECK_EQUAL(vec[3], *it);
+        CHECK_EQUAL(&vec[3], &(*it));
+      }
+
+    }
+
+    //*************************************************************************
+    TEST(ranges_find_if_not)
+    {
+      auto proj = [](const int& v) { return v * 2; };
+      auto pred = [](const int& v) { return v != 1; };
+
+      {
+        std::vector<int> vec{7, 2, 1, 8, 1, 6};
+        auto it = etl::ranges::find_if_not(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), pred);
+        CHECK_EQUAL(vec[2], *it);
+        CHECK_EQUAL(&vec[2], &(*it));
+        *it = 3;
+
+        it = etl::ranges::find_if_not(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), pred);
+        CHECK_EQUAL(vec[4], *it);
+        CHECK_EQUAL(&vec[4], &(*it));
+
+        it = etl::ranges::find_if_not(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), [](const int& v) { return v != 9; });
+
+        CHECK(vec.end() == it);
+
+        it = etl::ranges::find_if_not(ETL_OR_STD::begin(vec), ETL_OR_STD::end(vec), [](const int& v) { return v != 12; }, proj);
+        CHECK_EQUAL(vec[5], *it);
+        CHECK_EQUAL(&vec[5], &(*it));
+      }
+
+      {
+        std::vector<int> vec{7, 2, 1, 8, 1, 6};
+        auto it = etl::ranges::find_if_not(vec, pred);
+        CHECK_EQUAL(vec[2], *it);
+        CHECK_EQUAL(&vec[2], &(*it));
+
+        it = etl::ranges::find_if_not(vec, [](const int& v) { return v != 16; }, proj);
+        CHECK_EQUAL(vec[3], *it);
+        CHECK_EQUAL(&vec[3], &(*it));
+      }
+
+    }
+#endif
   }
 }

@@ -646,7 +646,17 @@ namespace etl
     return private_functional::const_mem_fn_impl<TReturnType, TClassType, TArgs...>(member_function);
   }
 #endif
+
+#if ETL_USING_CPP14
+  struct identity
+  {
+    template<class T>
+    constexpr T&& operator()(T&& t) const noexcept
+    {
+      return etl::forward<T>(t);
+    }
+  };
+#endif
 }
 
 #endif
-

@@ -32,6 +32,7 @@ SOFTWARE.
 #include <list>
 #include <queue>
 #include <algorithm>
+#include <vector>
 
 #include "etl/iterator.h"
 
@@ -580,5 +581,73 @@ namespace
     //  CHECK_EQUAL(expected.size(), output.size());
     //  CHECK(std::equal(output.begin(), output.end(), expected.begin()));
     //}
+
+#if ETL_USING_CPP17
+    //*************************************************************************
+    TEST(test_counted_iterator)
+    {
+      std::vector<int> v{1, 2, 3, 4};
+
+      etl::counted_iterator<std::vector<int>::iterator> ci0{};
+      CHECK_EQUAL(0, ci0.count());
+
+      etl::counted_iterator ci1{v.begin(), 3};
+      etl::counted_iterator ci2{v.begin(), 4};
+      CHECK_EQUAL(3, ci1.count());
+
+      CHECK_NOT_EQUAL(ci1.count(), ci2.count());
+      CHECK(!(ci1 == ci2));
+
+      ci2 = ci1;
+
+      CHECK_EQUAL(ci1.count(), ci2.count());
+      CHECK(ci1 == ci2);
+
+      CHECK(ci1.base() == v.begin());
+
+      CHECK(ci1.count() == 3);
+
+      ci1++;
+
+      CHECK(ci1.count() == 2);
+
+      ++ci1;
+
+      CHECK(ci1.count() == 1);
+
+      ci1--;
+
+      CHECK(ci1.count() == 2);
+      --ci1;
+      CHECK(ci1.count() == 3);
+
+      ci1 += 2;
+      CHECK(ci1.count() == 1);
+      ci1 -= 2;
+      CHECK(ci1.count() == 3);
+      CHECK_EQUAL(ci1[0], 1);
+      CHECK_EQUAL(ci1[1], 2);
+      CHECK_EQUAL(ci1[2], 3);
+
+      auto ci3 = ci1 + 3;
+      CHECK(ci1.count() == 3);
+      CHECK_EQUAL(ci3.count(), 0);
+      auto ci4 = ci3 - 3;
+      CHECK(ci1.count() == 3);
+      CHECK_EQUAL(ci3.count(), 0);
+      CHECK(ci4.count() == 3);
+
+    }
+
+    TEST(test_is_range)
+    {
+      std::vector<int> vec;
+      int arr[3]{};
+      int i{};
+      static_assert(etl::is_range_v<decltype(vec)> == true, "Expected range");
+      static_assert(etl::is_range_v<decltype(arr)> == false, "Expected range");
+      static_assert(etl::is_range_v<decltype(i)> == false, "Expected non range");
+    }
+#endif
   }
 }

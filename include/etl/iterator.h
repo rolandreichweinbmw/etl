@@ -1211,6 +1211,385 @@ namespace etl
   char(&array_size(T(&array)[Array_Size]))[Array_Size];
 
 #define ETL_ARRAY_SIZE(a) sizeof(etl::array_size(a))
+
+#if ETL_USING_CPP17
+
+  template<class T>
+  using iter_value_t = typename etl::iterator_traits<etl::remove_cvref_t<T>>::value_type;
+
+  template<class T>
+  using iter_reference_t = decltype(*etl::declval<T&>());
+
+#if ETL_USING_CPP20
+  template<class T>
+  using iter_const_reference_t = typename etl::common_reference_t<const etl::iter_value_t<T>&&, etl::iter_reference_t<T>>;
+#endif
+
+  template<class T>
+  using iter_difference_t = typename etl::iterator_traits<etl::remove_cvref_t<T>>::difference_type;
+
+  namespace ranges
+  {
+    namespace private_ranges
+    {
+      struct begin
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::begin(t);
+        }
+      };
+
+      struct end
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::end(t);
+        }
+      };
+
+      struct cbegin
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::cbegin(t);
+        }
+      };
+
+      struct cend
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::cend(t);
+        }
+      };
+
+      struct rbegin
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::rbegin(t);
+        }
+      };
+
+      struct rend
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::rend(t);
+        }
+      };
+
+      struct crbegin
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::crbegin(t);
+        }
+      };
+
+      struct crend
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::crend(t);
+        }
+      };
+
+      struct size
+      {
+        template<class T>
+        constexpr size_t operator()(T&& t) const
+        {
+          return static_cast<size_t>(etl::distance(ETL_OR_STD::cbegin(t), ETL_OR_STD::cend(t)));
+        }
+      };
+
+      struct ssize
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return static_cast<ptrdiff_t>(etl::distance(ETL_OR_STD::cbegin(t), ETL_OR_STD::cend(t)));
+        }
+      };
+
+      struct empty
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return etl::distance(ETL_OR_STD::cbegin(t), ETL_OR_STD::cend(t)) == 0;
+        }
+      };
+
+      struct data
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::data(t);
+        }
+      };
+
+      struct cdata
+      {
+        template<class T>
+        constexpr auto operator()(T&& t) const
+        {
+          return ETL_OR_STD::data(t);
+        }
+      };
+    }
+
+    inline constexpr private_ranges::begin begin;
+    inline constexpr private_ranges::end end;
+    inline constexpr private_ranges::cbegin cbegin;
+    inline constexpr private_ranges::cend cend;
+    inline constexpr private_ranges::rbegin rbegin;
+    inline constexpr private_ranges::rend rend;
+    inline constexpr private_ranges::crbegin crbegin;
+    inline constexpr private_ranges::crend crend;
+    inline constexpr private_ranges::size size;
+    inline constexpr private_ranges::ssize ssize;
+    inline constexpr private_ranges::empty empty;
+    inline constexpr private_ranges::data data;
+    inline constexpr private_ranges::cdata cdata;
+
+    //*************************************************************************
+    /// Range primitves.
+    //*************************************************************************
+
+    template<class T>
+    using iterator_t = decltype(etl::ranges::begin(etl::declval<T&>()));
+
+    template<class T>
+    using const_iterator_t = decltype(etl::ranges::cbegin(etl::declval<T&>()));
+
+    template<class T>
+    using sentinel_t = decltype(etl::ranges::end(etl::declval<T&>()));
+
+    template<class T>
+    using const_sentinel_t = decltype(etl::ranges::cend(etl::declval<T&>()));
+
+    template<class T>
+    using range_size_t = decltype(etl::ranges::size(etl::declval<T&>()));
+
+    template<class T>
+    using range_difference_t = etl::iter_difference_t<etl::ranges::iterator_t<T>>;
+
+    template<class T>
+    using range_value_t = etl::iter_value_t<etl::ranges::iterator_t<T>>;
+
+    template<class T>
+    using range_reference_t = etl::iter_reference_t<ranges::iterator_t<T>>;
+  }
+
+  struct unreachable_sentinel_t
+  {
+  };
+
+  inline constexpr unreachable_sentinel_t unreachable_sentinel{};
+
+  template<typename I>
+  constexpr bool operator==(unreachable_sentinel_t, const I&) noexcept
+  {
+    return false;
+  }
+
+  struct default_sentinel_t
+  {
+  };
+
+  inline constexpr default_sentinel_t default_sentinel{};
+
+  template<class I>
+  class counted_iterator
+  {
+    public:
+      using iterator_type = I;
+      using value_type = etl::iter_value_t<I>;
+      using difference_type = etl::iter_difference_t<I>;
+      using iterator_category = typename iterator_type::iterator_category;
+      using pointer = typename iterator_type::pointer;
+      using reference = typename iterator_type::reference;
+
+      constexpr counted_iterator() = default;
+
+      constexpr counted_iterator(I x, etl::iter_difference_t<I> n): current(etl::move(x)), length(n)
+      {
+      }
+
+      template<class I2>
+      constexpr counted_iterator(const counted_iterator<I2>& other): current(other.current), length(other.length)
+      {
+      }
+
+      template<class I2>
+      constexpr counted_iterator& operator=(const counted_iterator<I2>& other)
+      {
+        current = other.current;
+        length = other.length;
+        return *this;
+      }
+
+      constexpr const I& base() const& noexcept
+      {
+        return current;
+      }
+
+      constexpr I base() &&
+      {
+        return etl::move(current);
+      }
+
+      constexpr etl::iter_difference_t<I> count() const noexcept
+      {
+        return length;
+      }
+
+      constexpr decltype(auto) operator*() const
+      {
+        return *current;
+      }
+
+      constexpr auto operator->() const noexcept
+      {
+        return current.operator->();
+      }
+
+      constexpr decltype(auto) operator[](etl::iter_difference_t<I> n) const
+      {
+        return current[n];
+      }
+
+      constexpr counted_iterator& operator++()
+      {
+        ++current;
+        --length;
+        return *this;
+      }
+
+      constexpr counted_iterator operator++(int)
+      {
+        counted_iterator tmp = *this;
+        current++;
+        length--;
+        return tmp;
+      }
+
+      constexpr counted_iterator& operator+=(etl::iter_difference_t<I> n)
+      {
+        current += n;
+        length -= n;
+        return *this;
+      }
+
+      constexpr counted_iterator operator+(etl::iter_difference_t<I> n) const
+      {
+        counted_iterator result{*this};
+        result += n;
+        return result;
+      }
+
+      constexpr counted_iterator& operator--()
+      {
+        --current;
+        ++length;
+        return *this;
+      }
+
+      constexpr counted_iterator operator--(int)
+      {
+        counted_iterator tmp = *this;
+        current--;
+        length++;
+        return tmp;
+      }
+
+      constexpr counted_iterator& operator-=(etl::iter_difference_t<I> n)
+      {
+        current -= n;
+        length += n;
+        return *this;
+      }
+
+      constexpr counted_iterator operator-(etl::iter_difference_t<I> n) const
+      {
+        counted_iterator result{*this};
+        result -= n;
+        return result;
+      }
+
+      friend constexpr bool operator==(const counted_iterator& x, const counted_iterator& y)
+      {
+        return x.length == y.length;
+      }
+
+      friend constexpr bool operator==(const counted_iterator& x, etl::default_sentinel_t)
+      {
+        return x.count() == 0;
+      }
+
+      friend constexpr counted_iterator operator+(etl::iter_difference_t<I> n, const counted_iterator& x)
+      {
+        return counted_iterator(x.current + n, x.length - n);
+      }
+
+      friend constexpr etl::iter_difference_t<I> operator-(const counted_iterator& x, const counted_iterator& y)
+      {
+        return y.length - x.length;
+      }
+
+      friend constexpr etl::iter_difference_t<I> operator-(const counted_iterator& x, etl::default_sentinel_t)
+      {
+        return -x.length;
+      }
+
+      friend constexpr etl::iter_difference_t<I> operator-(etl::default_sentinel_t, const counted_iterator& y)
+      {
+        return y.length;
+      }
+
+    private:
+      I current{};
+      difference_type length{};
+  };
+
+  template<typename TIterator, typename = etl::enable_if_t<etl::is_base_of<etl::counted_iterator<typename TIterator::iterator_type>, TIterator>::value>>
+  constexpr typename etl::iterator_traits<TIterator>::difference_type distance(TIterator first, etl::default_sentinel_t)
+  {
+    return first.count();
+  }
+
+#endif
+
+#if ETL_USING_CPP14
+  template <class T, typename = void>
+  struct is_range: etl::false_type
+  {
+  };
+
+  template <class T>
+  struct is_range<T,
+    etl::void_t<decltype(ETL_OR_STD::begin(etl::declval<etl::remove_reference_t<T>>())),
+                decltype(ETL_OR_STD::end(etl::declval<etl::remove_reference_t<T>>()))>>: etl::true_type
+  {
+  };
+
+#if ETL_USING_CPP17
+  template <typename T>
+  inline constexpr bool is_range_v = is_range<T>::value;
+#endif
+#endif
 }
 
 #endif
