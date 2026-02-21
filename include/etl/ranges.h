@@ -425,7 +425,7 @@ namespace etl
         return iota_iterator{static_cast<value_type>(_i - n)};
       }
 
-      size_t operator-(iota_iterator other) const
+      difference_type operator-(iota_iterator other) const
       {
         return _i - other._i;
       }
@@ -848,9 +848,9 @@ namespace etl
         struct owning
         {
           template<class Range>
-          constexpr auto operator()(Range& r) const
+          constexpr auto operator()(Range&& r) const
           {
-            return ranges::owning_view(r);
+            return ranges::owning_view(etl::forward<Range>(r));
           }
 
           constexpr auto operator()() const
@@ -913,10 +913,18 @@ namespace etl
 
         filter_iterator(const_iterator it, const_iterator it_end, const Pred& p): _it{it}, _it_begin{it}, _it_end{it_end}, _p{p}
         {
+          if (_it != _it_end && !_p(*_it))
+          {
+            ++_it;
+          }
         }
 
         filter_iterator(const filter_iterator& other): _it{other._it}, _it_begin{other._it_begin}, _it_end{other._it_end}, _p{other._p}
         {
+          if (_it != _it_end && !_p(*_it))
+          {
+            ++_it;
+          }
         }
 
         filter_iterator& operator++()
@@ -934,7 +942,7 @@ namespace etl
           filter_iterator tmp = *this;
 
           _it++;
-          if (_it != _it_end && !_p(*_it))
+          while (_it != _it_end && !_p(*_it))
           {
             _it++;
           }
@@ -957,7 +965,7 @@ namespace etl
           filter_iterator tmp = *this;
 
           _it--;
-          if (_it != _it_begin && !_p(*_it))
+          while (_it != _it_begin && !_p(*_it))
           {
             _it--;
           }
@@ -1002,10 +1010,6 @@ namespace etl
 
         value_type operator*()
         {
-          if (_it != _it_end && !_p(*_it))
-          {
-            ++_it;
-          }
           return *_it;
         }
 
@@ -1133,7 +1137,7 @@ namespace etl
         using pointer = typename trait::pointer;
         using reference = typename trait::reference;
 
-        using iterator_category =  ETL_OR_STD::random_access_iterator_tag;
+        using iterator_category =  ETL_OR_STD::forward_iterator_tag;
 
         transform_iterator(const_iterator it, Fun f): _it(it), _f(f)
         {
@@ -1200,12 +1204,12 @@ namespace etl
 
         constexpr const_iterator begin() const
         {
-          return const_iterator(ETL_OR_STD::cbegin(_r), _fun);
+          return const_iterator(ETL_OR_STD::begin(_r), _fun);
         }
 
         constexpr const_iterator end() const
         {
-          return const_iterator(ETL_OR_STD::cend(_r), _fun);
+          return const_iterator(ETL_OR_STD::end(_r), _fun);
         }
 
         constexpr size_t size() const
@@ -1533,7 +1537,7 @@ namespace etl
           return _r;
         }
 
-        constexpr Pred& pred() const
+        constexpr const Pred& pred() const
         {
           return _pred;
         }
@@ -1713,7 +1717,7 @@ namespace etl
           return _r;
         }
 
-        constexpr Pred& pred() const
+        constexpr const Pred& pred() const
         {
           return _pred;
         }
