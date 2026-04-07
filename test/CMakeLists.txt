@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(etl_unit_tests LANGUAGES CXX)
 
+include(CheckCXXCompilerFlag)
+
 #include(FetchContent)
 #FetchContent_Declare(
 #  googletest
@@ -195,6 +197,7 @@ add_executable(etl_tests
 	test_function.cpp
 	test_functional.cpp
 	test_function_traits.cpp
+	test_future.cpp
 	test_gamma.cpp
 	test_hash.cpp
 	test_hfsm.cpp
@@ -230,6 +233,7 @@ add_executable(etl_tests
 	test_map.cpp
 	test_math.cpp
 	test_math_functions.cpp
+	test_meta.cpp
 	test_mean.cpp
 	test_memory.cpp
 	test_mem_cast.cpp
@@ -257,6 +261,9 @@ add_executable(etl_tests
 	test_nth_type.cpp
 	test_numeric.cpp
 	test_observer.cpp
+	test_opensomeip.cpp
+	test_opensomeip_sd.cpp
+	test_opensomeip_tp.cpp
 	test_optional.cpp
 	test_overload.cpp
 	test_packet.cpp
@@ -295,6 +302,7 @@ add_executable(etl_tests
 	test_result.cpp
 	test_rms.cpp
 	test_rounded_integral_division.cpp
+	test_rpc26.cpp
 	test_scaled_rounding.cpp
 	test_set.cpp
 	test_shared_message.cpp
@@ -510,6 +518,16 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 			${EXTRA_COMPILE_OPTIONS}
 			)
 	target_link_options(etl_tests PRIVATE ${EXTRA_LINK_OPTIONS})
+
+	if (ETL_CXX_STANDARD MATCHES "26")
+		# -freflection is only accepted when compiling as C++26, so probe with that standard.
+		set(CMAKE_REQUIRED_FLAGS "-std=c++26")
+		check_cxx_compiler_flag(-freflection ETL_GNU_HAS_FREFLECTION)
+		unset(CMAKE_REQUIRED_FLAGS)
+		if (ETL_GNU_HAS_FREFLECTION)
+			target_compile_options(etl_tests PRIVATE -freflection)
+		endif ()
+	endif ()
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -532,6 +550,25 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 			${EXTRA_COMPILE_OPTIONS}
 			)
 	target_link_options(etl_tests PRIVATE ${EXTRA_LINK_OPTIONS})
+
+	if (ETL_CXX_STANDARD MATCHES "26")
+		# Only the P2996 Clang fork (clang-p2996) accepts these; upstream Clang does not.
+		set(CMAKE_REQUIRED_FLAGS "-std=c++26")
+		check_cxx_compiler_flag(-freflection ETL_CLANG_HAS_FREFLECTION)
+		check_cxx_compiler_flag(-fparameter-reflection ETL_CLANG_HAS_FPARAMETER_REFLECTION)
+		check_cxx_compiler_flag(-fexpansion-statements ETL_CLANG_HAS_FEXPANSION_STATEMENTS)
+		unset(CMAKE_REQUIRED_FLAGS)
+		if (ETL_CLANG_HAS_FREFLECTION)
+			target_compile_options(etl_tests PRIVATE -freflection)
+		endif ()
+		if (ETL_CLANG_HAS_FPARAMETER_REFLECTION)
+			# P3096 function parameter reflection is opt-in on the clang-p2996 fork.
+			target_compile_options(etl_tests PRIVATE -fparameter-reflection)
+		endif ()
+		if (ETL_CLANG_HAS_FEXPANSION_STATEMENTS)
+			target_compile_options(etl_tests PRIVATE -fexpansion-statements)
+		endif ()
+	endif ()
 endif ()
 
 if ((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))

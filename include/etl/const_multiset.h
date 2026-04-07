@@ -417,6 +417,9 @@ namespace etl
     /// Static asserts if the number of elements is greater than the capacity of
     /// the const_set.
     //*************************************************************************
+    // The base class is passed 'element_list' before it has been initialised, but it only
+    // stores the address, so GCC's 'maybe-uninitialized' warning is a false positive.
+  #include "private/diagnostic_uninitialized_push.h"
     template <typename... TElements>
     ETL_CONSTEXPR14 explicit const_multiset(TElements&&... elements) ETL_NOEXCEPT
       : iconst_multiset<TKey, TKeyCompare>(element_list, sizeof...(elements), Size)
@@ -425,6 +428,7 @@ namespace etl
       static_assert((etl::are_all_same<value_type, etl::decay_t<TElements>...>::value), "All elements must be value_type");
       static_assert(sizeof...(elements) <= Size, "Number of elements exceeds capacity");
     }
+  #include "private/diagnostic_pop.h"
 
   private:
 

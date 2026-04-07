@@ -1,0 +1,6 @@
+{
+	"name": "GCC 16",
+	"build": {
+		"dockerfile": "./Dockerfile"
+	}
+}

@@ -699,10 +699,18 @@ namespace etl
 
   //***************************************************************************
   /// is_fundamental
+  #if ETL_USING_CPP11
+  template <typename T>
+  struct is_fundamental
+    : etl::bool_constant<is_arithmetic<T>::value || is_void<T>::value || etl::is_same<typename etl::remove_cv<T>::type, decltype(nullptr)>::value>
+  {
+  };
+  #else
   template <typename T>
   struct is_fundamental : etl::bool_constant<is_arithmetic<T>::value || is_void<T>::value>
   {
   };
+  #endif
 
   #if ETL_USING_CPP17
   template <typename T>
@@ -1507,6 +1515,55 @@ namespace etl
   inline constexpr size_t alignment_of_v = etl::alignment_of<T>::value;
   #endif
 
+  //***************************************************************************
+  /// is_null_pointer
+  ///\ingroup type_traits
+  #if ETL_USING_CPP11
+  template <typename T>
+  struct is_null_pointer : etl::bool_constant<etl::is_same<typename etl::remove_cv<T>::type, decltype(nullptr)>::value>
+  {
+  };
+
+  #if ETL_USING_CPP17
+  template <typename T>
+  inline constexpr bool is_null_pointer_v = is_null_pointer<T>::value;
+  #endif
+  #endif
+
+  //***************************************************************************
+  /// is_bounded_array
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_bounded_array : etl::false_type
+  {
+  };
+  template <typename T, size_t Size>
+  struct is_bounded_array<T[Size]> : etl::true_type
+  {
+  };
+
+  #if ETL_USING_CPP17
+  template <typename T>
+  inline constexpr bool is_bounded_array_v = is_bounded_array<T>::value;
+  #endif
+
+  //***************************************************************************
+  /// is_unbounded_array
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_unbounded_array : etl::false_type
+  {
+  };
+  template <typename T>
+  struct is_unbounded_array<T[]> : etl::true_type
+  {
+  };
+
+  #if ETL_USING_CPP17
+  template <typename T>
+  inline constexpr bool is_unbounded_array_v = is_unbounded_array<T>::value;
+  #endif
+
 #else // Condition = ETL_USING_STL && ETL_USING_CPP11
 
   //*****************************************************************************
@@ -2249,6 +2306,161 @@ namespace etl
   #if ETL_USING_CPP17
   template <typename T>
   inline constexpr size_t alignment_of_v = std::alignment_of_v<T>;
+  #endif
+
+  //***************************************************************************
+  /// is_null_pointer
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_null_pointer : std::is_null_pointer<T>
+  {
+  };
+
+  #if ETL_USING_CPP17
+  template <typename T>
+  inline constexpr bool is_null_pointer_v = std::is_null_pointer_v<T>;
+  #endif
+
+  // These traits are defined by the compiler builtins section, further down this file,
+  // when ETL_USE_TYPE_TRAITS_BUILTINS is defined.
+  #if !defined(ETL_USE_TYPE_TRAITS_BUILTINS)
+  //***************************************************************************
+  /// is_union
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_union : std::is_union<T>
+  {
+  };
+
+  //***************************************************************************
+  /// is_empty
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_empty : std::is_empty<T>
+  {
+  };
+
+  //***************************************************************************
+  /// is_polymorphic
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_polymorphic : std::is_polymorphic<T>
+  {
+  };
+
+  //***************************************************************************
+  /// is_abstract
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_abstract : std::is_abstract<T>
+  {
+  };
+
+  //***************************************************************************
+  /// is_final
+  ///\ingroup type_traits
+  #if ETL_USING_CPP14
+  template <typename T>
+  struct is_final : std::is_final<T>
+  {
+  };
+  #endif
+
+  //***************************************************************************
+  /// is_aggregate
+  ///\ingroup type_traits
+  #if ETL_USING_CPP17
+  template <typename T>
+  struct is_aggregate : std::is_aggregate<T>
+  {
+  };
+  #endif
+
+  //***************************************************************************
+  /// is_scalar
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_scalar : std::is_scalar<T>
+  {
+  };
+  #endif
+
+  //***************************************************************************
+  /// is_bounded_array
+  ///\ingroup type_traits
+  #if ETL_USING_CPP20 && defined(__cpp_lib_bounded_array_traits)
+  template <typename T>
+  struct is_bounded_array : std::is_bounded_array<T>
+  {
+  };
+  #else
+  template <typename T>
+  struct is_bounded_array : etl::false_type
+  {
+  };
+  template <typename T, size_t Size>
+  struct is_bounded_array<T[Size]> : etl::true_type
+  {
+  };
+  #endif
+
+  #if ETL_USING_CPP17
+  template <typename T>
+  inline constexpr bool is_bounded_array_v = etl::is_bounded_array<T>::value;
+  #endif
+
+  //***************************************************************************
+  /// is_unbounded_array
+  ///\ingroup type_traits
+  #if ETL_USING_CPP20 && defined(__cpp_lib_bounded_array_traits)
+  template <typename T>
+  struct is_unbounded_array : std::is_unbounded_array<T>
+  {
+  };
+  #else
+  template <typename T>
+  struct is_unbounded_array : etl::false_type
+  {
+  };
+  template <typename T>
+  struct is_unbounded_array<T[]> : etl::true_type
+  {
+  };
+  #endif
+
+  #if ETL_USING_CPP17
+  template <typename T>
+  inline constexpr bool is_unbounded_array_v = etl::is_unbounded_array<T>::value;
+  #endif
+
+  // These traits are defined by the compiler builtins section, further down this file,
+  // when ETL_USE_TYPE_TRAITS_BUILTINS is defined.
+  #if !defined(ETL_USE_TYPE_TRAITS_BUILTINS)
+  //***************************************************************************
+  /// is_scoped_enum
+  ///\ingroup type_traits
+  #if ETL_USING_CPP23 && defined(__cpp_lib_is_scoped_enum)
+  template <typename T>
+  struct is_scoped_enum : std::is_scoped_enum<T>
+  {
+  };
+  #endif
+
+  //***************************************************************************
+  /// is_destructible
+  ///\ingroup type_traits
+  template <typename T>
+  struct is_destructible : std::is_destructible<T>
+  {
+  };
+
+  //***************************************************************************
+  /// has_virtual_destructor
+  ///\ingroup type_traits
+  template <typename T>
+  struct has_virtual_destructor : std::has_virtual_destructor<T>
+  {
+  };
   #endif
 
 #endif // Condition = ETL_USING_STL && ETL_USING_CPP11
@@ -3026,8 +3238,99 @@ namespace etl
   template <typename T>
   struct is_nothrow_relocatable
   {
-    // In builtins mode, conservatively use trivially_relocatable as the definition
-    static ETL_CONSTANT bool value = etl::is_trivially_relocatable<T>::value;
+  private:
+
+    typedef typename etl::remove_all_extents<T>::type element_type;
+
+  public:
+
+    static ETL_CONSTANT bool value = etl::is_trivially_relocatable<T>::value ||
+                                     (__is_nothrow_constructible(element_type, element_type&&) &&
+                                      __is_nothrow_destructible(element_type));
+  };
+
+  //*********************************************
+  // is_union
+  template <typename T>
+  struct is_union
+  {
+    static ETL_CONSTANT bool value = __is_union(T);
+  };
+
+  //*********************************************
+  // is_empty
+  template <typename T>
+  struct is_empty
+  {
+    static ETL_CONSTANT bool value = __is_empty(T);
+  };
+
+  //*********************************************
+  // is_polymorphic
+  template <typename T>
+  struct is_polymorphic
+  {
+    static ETL_CONSTANT bool value = __is_polymorphic(T);
+  };
+
+  //*********************************************
+  // is_abstract
+  template <typename T>
+  struct is_abstract
+  {
+    static ETL_CONSTANT bool value = __is_abstract(T);
+  };
+
+  //*********************************************
+  // is_final
+  template <typename T>
+  struct is_final
+  {
+    static ETL_CONSTANT bool value = __is_final(T);
+  };
+
+  //*********************************************
+  // is_aggregate
+  template <typename T>
+  struct is_aggregate
+  {
+    static ETL_CONSTANT bool value = __is_aggregate(T);
+  };
+
+  //*********************************************
+  // is_scalar
+  template <typename T>
+  struct is_scalar
+  {
+    static ETL_CONSTANT bool value = is_arithmetic<T>::value ||
+                                     is_enum<T>::value       ||
+                                     is_pointer<T>::value    ||
+                                     __is_member_pointer(T)  ||
+                                     is_null_pointer<T>::value;
+  };
+
+  //*********************************************
+  // is_scoped_enum
+  template <typename T>
+  struct is_scoped_enum
+  {
+    static ETL_CONSTANT bool value = __is_scoped_enum(T);
+  };
+
+  //*********************************************
+  // is_destructible
+  template <typename T>
+  struct is_destructible
+  {
+    static ETL_CONSTANT bool value = __is_destructible(T);
+  };
+
+  //*********************************************
+  // has_virtual_destructor
+  template <typename T>
+  struct has_virtual_destructor
+  {
+    static ETL_CONSTANT bool value = __has_virtual_destructor(T);
   };
 
 #elif defined(ETL_USER_DEFINED_TYPE_TRAITS) && !defined(ETL_USE_TYPE_TRAITS_BUILTINS)
@@ -3648,6 +3951,40 @@ namespace etl
 
   template <typename T>
   inline constexpr bool is_nothrow_relocatable_v = etl::is_nothrow_relocatable<T>::value;
+
+#if (ETL_USING_STL && ETL_USING_CPP11) || defined(ETL_USE_TYPE_TRAITS_BUILTINS)
+  template <typename T>
+  inline constexpr bool is_union_v = etl::is_union<T>::value;
+
+  template <typename T>
+  inline constexpr bool is_empty_v = etl::is_empty<T>::value;
+
+  template <typename T>
+  inline constexpr bool is_polymorphic_v = etl::is_polymorphic<T>::value;
+
+  template <typename T>
+  inline constexpr bool is_abstract_v = etl::is_abstract<T>::value;
+
+  template <typename T>
+  inline constexpr bool is_final_v = etl::is_final<T>::value;
+
+  template <typename T>
+  inline constexpr bool is_aggregate_v = etl::is_aggregate<T>::value;
+
+  template <typename T>
+  inline constexpr bool is_scalar_v = etl::is_scalar<T>::value;
+
+#if (ETL_USING_STL && ETL_USING_CPP23 && defined(__cpp_lib_is_scoped_enum)) || defined(ETL_USE_TYPE_TRAITS_BUILTINS)
+  template <typename T>
+  inline constexpr bool is_scoped_enum_v = etl::is_scoped_enum<T>::value;
+#endif
+
+  template <typename T>
+  inline constexpr bool is_destructible_v = etl::is_destructible<T>::value;
+
+  template <typename T>
+  inline constexpr bool has_virtual_destructor_v = etl::has_virtual_destructor<T>::value;
+#endif
 
 #endif
 
