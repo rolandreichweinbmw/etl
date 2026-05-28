@@ -31,7 +31,7 @@ Constructor.
 ```cpp
 TInput operator()(TInput value) const
 ```
-**Description**  
+**Description**
 Gamma a value.
 
 ---
@@ -39,7 +39,7 @@ Gamma a value.
 ```cpp
 gamma_decode(double gamma, TInput maximum)
 ```
-**Decsription**  
+**Description**
 Constructor.
 
 ---

@@ -102,6 +102,7 @@ Write the value.
 ```cpp
 pointer get_address()
 const_pointer get_address() const
+```
 **Description**  
 Gets the address of the port.
 
@@ -275,7 +276,7 @@ Get an iterator to this port.
 const_iterator iter() const
 const_iterator citer() const
 ```
-**Decsription**  
+**Description**
 Get a `const_iterator` to this port.
 
 ---
