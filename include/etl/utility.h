@@ -490,6 +490,18 @@ namespace etl
   };
 
 #if ETL_NOT_USING_STL || ETL_CPP14_NOT_SUPPORTED
+  #if ETL_USING_CPP11
+  //***************************************************************************
+  /// exchange
+  //***************************************************************************
+  template <typename T, typename U = T>
+  T exchange(T& object, U&& new_value)
+  {
+    T old_value = etl::move(object);
+    object      = etl::forward<U>(new_value);
+    return old_value;
+  }
+  #else
   //***************************************************************************
   /// exchange (const)
   //***************************************************************************
@@ -508,14 +520,15 @@ namespace etl
     object      = new_value;
     return old_value;
   }
+  #endif
 #else
   //***************************************************************************
-  /// exchange (const)
+  /// exchange
   //***************************************************************************
   template <typename T, typename U = T>
-  T exchange(T& object, const U& new_value)
+  T exchange(T& object, U&& new_value)
   {
-    return std::exchange(object, new_value);
+    return std::exchange(object, etl::forward<U>(new_value));
   }
 #endif
 

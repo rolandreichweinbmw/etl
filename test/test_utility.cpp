@@ -316,6 +316,24 @@ namespace
     }
 
     //*************************************************************************
+    // https://github.com/ETLCPP/etl/issues/1405
+    TEST(test_exchange_moveable)
+    {
+      ItemM1 a(1);
+      ItemM1 b(2);
+
+      ItemM1 c = etl::exchange(a, etl::move(b)); // c = old a, a = old b
+
+      CHECK_EQUAL(1, c.value); // Returns the old value of a.
+      CHECK_TRUE(bool(c));     // The returned value is valid.
+
+      CHECK_EQUAL(2, a.value); // a now holds the new value.
+      CHECK_TRUE(bool(a));     // a is valid.
+
+      CHECK_FALSE(bool(b)); // b was moved from.
+    }
+
+    //*************************************************************************
     TEST(test_as_const)
     {
       std::string text = "Hello World!";
