@@ -511,6 +511,27 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 	target_link_options(etl_tests PRIVATE ${EXTRA_LINK_OPTIONS})
 endif ()
 
+# ---------------------------------------------------------------------------
+# GCC 12 and 13 miscompile the inter-procedural mod/ref analysis
+# (-fipa-modref) of std::vector<pointer-to-member-function> operations. The
+# corruption makes the std::vector reference data used by these tests report a
+# bogus size, throwing spurious std::length_error / std::bad_alloc (or crashing
+# with SIGSEGV) at -O2 and above. The defect is fixed in GCC 14; disabling the
+# pass for just these two translation units restores correct code generation.
+# The flag is applied only when the compiler accepts it, so Clang and GCC < 12
+# (which do not know -fno-ipa-modref) are left untouched.
+# ---------------------------------------------------------------------------
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+	include(CheckCXXCompilerFlag)
+	check_cxx_compiler_flag("-fno-ipa-modref" ETL_HAS_FNO_IPA_MODREF)
+	if (ETL_HAS_FNO_IPA_MODREF)
+		set_source_files_properties(
+			test_vector_member_function_pointer.cpp
+			test_vector_member_function_pointer_external_buffer.cpp
+			PROPERTIES COMPILE_OPTIONS "-fno-ipa-modref")
+	endif ()
+endif ()
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	target_compile_options(etl_tests
 			PRIVATE
