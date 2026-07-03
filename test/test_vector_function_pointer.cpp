@@ -35,6 +35,8 @@ SOFTWARE.
 
 #include "etl/vector.h"
 
+#include "etl/private/diagnostic_uninitialized_push.h"
+
 namespace
 {
   size_t f0(size_t a)
@@ -1313,3 +1315,5 @@ namespace
     }
   }
 } // namespace
+
+#include "etl/private/diagnostic_pop.h"

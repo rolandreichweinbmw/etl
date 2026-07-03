@@ -35,6 +35,8 @@ SOFTWARE.
 
 #include "etl/vector.h"
 
+#include "etl/private/diagnostic_uninitialized_push.h"
+
 namespace
 {
   SUITE(test_vector_member_function_pointer_external_buffer)
@@ -1327,3 +1329,5 @@ namespace
     }
   }
 } // namespace
+
+#include "etl/private/diagnostic_pop.h"
