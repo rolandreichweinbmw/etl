@@ -108,6 +108,7 @@ target_sources(tests PRIVATE
 		array_view.h.t.cpp
 		array_wrapper.h.t.cpp
 		atomic.h.t.cpp
+		atomic_force_etl_implementation.h.t.cpp
 		base64.h.t.cpp
 		base64_decoder.h.t.cpp
 		base64_encoder.h.t.cpp

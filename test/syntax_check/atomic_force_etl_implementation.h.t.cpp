@@ -5,7 +5,7 @@ Embedded Template Library.
 https://github.com/ETLCPP/etl
 https://www.etlcpp.com
 
-Copyright(c) 2017 John Wellbelove
+Copyright(c) 2026 BMW AG
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files(the "Software"), to deal
@@ -26,28 +26,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ******************************************************************************/
 
-#ifndef ETL_ATOMIC_INCLUDED
-#define ETL_ATOMIC_INCLUDED
+#include <etl/platform.h>
 
-#include "platform.h"
-
-// Define ETL_ATOMIC_FORCE_ETL_IMPLEMENTATION to select the ETL implementation of
-// etl::atomic (using the compiler builtins) in preference to std::atomic, even when
-// the STL is available. This is only supported for the Arm, GCC and Clang compilers.
-#if ETL_HAS_ATOMIC
-  #if (ETL_USING_CPP11 && ETL_USING_STL) && !defined(ETL_ATOMIC_FORCE_ETL_IMPLEMENTATION)
-    #include "atomic/atomic_std.h"
-  #elif defined(ETL_COMPILER_ARM5)
-    #include "atomic/atomic_arm.h"
-  #elif defined(ETL_COMPILER_ARM6)
-    #include "atomic/atomic_arm.h"
-  #elif defined(ETL_COMPILER_GCC)
-    #include "atomic/atomic_gcc_sync.h"
-  #elif defined(ETL_COMPILER_CLANG)
-    #include "atomic/atomic_clang_sync.h"
-  #else
-    #error ETL_ATOMIC_FORCE_ETL_IMPLEMENTATION is only supported for the Arm, GCC and Clang compilers.
-  #endif
+// Force the ETL implementation of etl::atomic (using the compiler built-ins) in
+// preference to std::atomic, even when the STL is available. Only the Arm, GCC and
+// Clang compilers provide an ETL implementation, so restrict the override to those.
+#if defined(ETL_COMPILER_ARM5) || defined(ETL_COMPILER_ARM6) || defined(ETL_COMPILER_GCC) || defined(ETL_COMPILER_CLANG)
+  #define ETL_ATOMIC_FORCE_ETL_IMPLEMENTATION
 #endif
 
+#include <etl/atomic.h>
+
+// Verify that the option actually selected the ETL implementation over std::atomic.
+#if defined(ETL_ATOMIC_FORCE_ETL_IMPLEMENTATION) && defined(ETL_ATOMIC_STD_INCLUDED)
+  #error ETL_ATOMIC_FORCE_ETL_IMPLEMENTATION did not override std::atomic
 #endif

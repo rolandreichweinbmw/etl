@@ -19,3 +19,6 @@ If there is an ETL atomic type available for your platform then `ETL_HAS_ATOMIC`
 it will be set to `0`.  
 
 From: `20.40.0`  `etl::atomic` supports the `is_always_lock_free` property.  
+
+Define `ETL_ATOMIC_FORCE_ETL_IMPLEMENTATION` to select the ETL implementation of `etl::atomic` (using the compiler built-ins) in preference to `std::atomic`, even when the STL is available.
+This is only supported for the Arm, GCC and Clang compilers.  
