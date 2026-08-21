@@ -1798,8 +1798,10 @@ namespace etl
   {
     // Library Fundamentals TS make_array design: the element type is T when
     // supplied explicitly, otherwise the decayed common type of the arguments.
+    // Arguments that are already of the element type are passed through
+    // unchanged, so no extra prvalue is materialised for them.
     using TElement = etl::private_make::element_type_t<T, TValues...>;
-    return {static_cast<TElement>(etl::forward<TValues>(values))...};
+    return {etl::private_make::convert<TElement>(etl::forward<TValues>(values))...};
   }
 #endif
 

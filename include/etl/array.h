@@ -1061,9 +1061,11 @@ namespace etl
     // Each argument is forwarded as its own deduced type and converted
     // explicitly, which accepts const-qualified lvalues (forwarding as the
     // element type rejected them) and keeps narrowing initialisers such as
-    // make_array<char>(0, 1) working.
+    // make_array<char>(0, 1) working. Arguments that are already of the
+    // element type are passed through unchanged, so no extra prvalue is
+    // materialised for them.
     using TElement = etl::private_make::element_type_t<T, TValues...>;
-    return {static_cast<TElement>(etl::forward<TValues>(values))...};
+    return {etl::private_make::convert<TElement>(etl::forward<TValues>(values))...};
   }
 #endif
 

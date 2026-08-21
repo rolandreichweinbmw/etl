@@ -3773,6 +3773,25 @@ namespace etl
 
     template <typename TDesired, typename... TArgs>
     using element_type_t = typename element_type<TDesired, TArgs...>::type;
+
+    //***********************************
+    // The type an argument is cast to when initialising an element of type
+    // TElement. An argument that is already a TElement is passed through as a
+    // reference, so the element is copy/move constructed directly from the
+    // caller's object. Casting to TElement unconditionally would create an
+    // extra prvalue, requiring an accessible move or copy constructor before
+    // the element itself is constructed, which would reject types that are
+    // constructible in place but not movable.
+    template <typename TElement, typename TValue>
+    using convert_type_t = typename etl::conditional<etl::is_same<typename etl::decay<TValue>::type, TElement>::value, TValue&&, TElement>::type;
+
+    template <typename TElement, typename TValue>
+    constexpr convert_type_t<TElement, TValue> convert(TValue&& value)
+    {
+      // The cast subsumes the forward: when TValue is already TElement the
+      // target type is TValue&&, which is exactly what etl::forward yields.
+      return static_cast<convert_type_t<TElement, TValue>>(value);
+    }
   } // namespace private_make
 #endif
 
