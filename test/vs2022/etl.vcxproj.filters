@@ -2564,6 +2564,12 @@
     <ClCompile Include="..\test_atomic.cpp">
       <Filter>Tests\Atomic</Filter>
     </ClCompile>
+    <ClCompile Include="..\test_mutex.cpp">
+      <Filter>Tests\Tasks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_semaphore.cpp">
+      <Filter>Tests\Tasks</Filter>
+    </ClCompile>
     <ClCompile Include="..\test_bit_stream_reader_big_endian.cpp">
       <Filter>Tests\Binary</Filter>
     </ClCompile>

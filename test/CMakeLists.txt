@@ -251,6 +251,7 @@ add_executable(etl_tests
 	test_multi_span.cpp
 	test_multi_vector.cpp
 	test_murmur3.cpp
+	test_mutex.cpp
 	test_not_null_pointer.cpp
 	test_not_null_pointer_constexpr.cpp
 	test_not_null_unique_pointer.cpp
@@ -296,6 +297,7 @@ add_executable(etl_tests
 	test_rms.cpp
 	test_rounded_integral_division.cpp
 	test_scaled_rounding.cpp
+	test_semaphore.cpp
 	test_set.cpp
 	test_shared_message.cpp
 	test_signal.cpp

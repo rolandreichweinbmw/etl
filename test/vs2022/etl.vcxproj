@@ -11247,6 +11247,7 @@
     <ClCompile Include="..\test_multi_span.cpp" />
     <ClCompile Include="..\test_multi_vector.cpp" />
     <ClCompile Include="..\test_murmur3.cpp" />
+    <ClCompile Include="..\test_mutex.cpp" />
     <ClCompile Include="..\test_nth_type.cpp" />
     <ClCompile Include="..\test_numeric.cpp" />
     <ClCompile Include="..\test_observer.cpp">
@@ -11384,6 +11385,7 @@
     <ClCompile Include="..\test_reference_flat_multiset.cpp" />
     <ClCompile Include="..\test_reference_flat_set.cpp" />
     <ClCompile Include="..\test_scaled_rounding.cpp" />
+    <ClCompile Include="..\test_semaphore.cpp" />
     <ClCompile Include="..\test_set.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
